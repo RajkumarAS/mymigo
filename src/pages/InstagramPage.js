@@ -5,7 +5,7 @@
 import { PUBLIC_CONFIG } from '../config.js';
 import { fetchVideos, getCachedVideos } from '../services/videoService.js';
 import { createReelPlayer } from '../components/ReelPlayer.js';
-import { hideMobileBottomDock, showMobileBottomDock } from '../components/NavBar.js';
+import { hideMobileBottomDock, showMobileBottomDock } from '../components/Navbar.js';
 import { escapeHtml } from '../utils/dom.js';
 import { mediaManager } from '../utils/mediaManager.js';
 
