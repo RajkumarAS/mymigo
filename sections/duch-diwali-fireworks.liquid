@@ -1,0 +1,454 @@
+{%- comment -%}
+  DUCH DIWALI LUXURY CANVAS FIREWORKS
+  Ultra-realistic golden aerial fireworks (chakras, peonies, weeping willows) and floating embers.
+  Inspired by the Beyours Diwali night aesthetic.
+  Features:
+  - 60 FPS HTML5 Canvas with additive glowing light blending ('lighter')
+  - Natural physics: velocity vectors, air drag, gravity droop, spark trails, and flickering embers
+  - Layered IN FRONT of dark backdrop & page content (pointer-events: none, z-index 9999998)
+  - Intelligent zone spawning: heavy in top-left & top-right, occasional bottom corners, keeping center clear
+  - Responsive, battery-friendly (pauses when tab is hidden, throttles particle count on mobile)
+{%- endcomment -%}
+
+{%- liquid
+  assign enable_fireworks = section.settings.enable_fireworks
+  assign z_index = section.settings.z_index | default: 9999998
+  assign burst_frequency = section.settings.burst_frequency | default: 1.6
+  assign show_ambient_sparks = section.settings.show_ambient_sparks
+-%}
+
+{%- if enable_fireworks or request.design_mode -%}
+<div
+  id="DuchFireworksContainer-{{ section.id }}"
+  class="duch-fireworks-wrapper"
+  style="--fireworks-z-index: {{ z_index }};"
+  data-frequency="{{ burst_frequency }}"
+  data-ambient-sparks="{% if show_ambient_sparks %}true{% else %}false{% endif %}"
+  data-density="{{ section.settings.particle_density | default: 'high' }}"
+  aria-hidden="true"
+>
+  <canvas id="DuchFireworksCanvas-{{ section.id }}" class="duch-fireworks-canvas"></canvas>
+</div>
+
+<style>
+  .duch-fireworks-wrapper {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none !important;
+    z-index: var(--fireworks-z-index, 9999998);
+    overflow: hidden;
+  }
+
+  .duch-fireworks-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none !important;
+  }
+</style>
+
+<script>
+  (function() {
+    function initFireworks() {
+      const container = document.getElementById('DuchFireworksContainer-{{ section.id }}');
+      if (!container) return;
+      const canvas = document.getElementById('DuchFireworksCanvas-{{ section.id }}');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const frequency = parseFloat(container.getAttribute('data-frequency')) || 1.6;
+      const enableAmbient = container.getAttribute('data-ambient-sparks') === 'true';
+      const density = container.getAttribute('data-density') || 'high';
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
+      }
+
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      const GOLD_PALETTES = [
+        ['#FFFFFF', '#FFE484', '#FFBA08', '#F48C06', '#DC2F02'],
+        ['#FFFDF0', '#FCE1A0', '#E5A93C', '#C27814', '#9D0208'],
+        ['#FFFFFF', '#FFD166', '#FF9F1C', '#E85D04', '#D00000'],
+        ['#FFFBE6', '#F3C969', '#FAA307', '#A43A20', '#631313']
+      ];
+
+      class Particle {
+        constructor(x, y, vx, vy, color, size, friction, gravity, decay, hasTrail) {
+          this.x = x;
+          this.y = y;
+          this.vx = vx;
+          this.vy = vy;
+          this.color = color;
+          this.size = size;
+          this.friction = friction;
+          this.gravity = gravity;
+          this.decay = decay;
+          this.alpha = 1.0;
+          this.hasTrail = hasTrail;
+          this.history = [];
+          this.maxHistory = hasTrail ? Math.floor(4 + Math.random() * 4) : 0;
+          this.flickerSpeed = 0.18 + Math.random() * 0.28;
+          this.flickerOffset = Math.random() * Math.PI * 2;
+        }
+
+        update(time) {
+          if (this.hasTrail) {
+            this.history.push({ x: this.x, y: this.y });
+            if (this.history.length > this.maxHistory) {
+              this.history.shift();
+            }
+          }
+
+          this.vx *= this.friction;
+          this.vy *= this.friction;
+          this.vy += this.gravity;
+
+          this.x += this.vx;
+          this.y += this.vy;
+
+          this.alpha -= this.decay;
+        }
+
+        draw(ctx, time) {
+          if (this.alpha <= 0) return;
+
+          const flicker = 0.84 + Math.sin(time * this.flickerSpeed + this.flickerOffset) * 0.16;
+          const currentAlpha = Math.max(0, Math.min(1, this.alpha * flicker));
+
+          if (this.hasTrail && this.history.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.history[0].x, this.history[0].y);
+            for (let i = 1; i < this.history.length; i++) {
+              ctx.lineTo(this.history[i].x, this.history[i].y);
+            }
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = this.color;
+            ctx.globalAlpha = currentAlpha * 0.7;
+            ctx.lineWidth = this.size * 0.95;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = currentAlpha;
+          ctx.fill();
+
+          if (this.size > 1.6 && currentAlpha > 0.35) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.globalAlpha = currentAlpha * 0.9;
+            ctx.fill();
+          }
+        }
+      }
+
+      class AmbientSpark {
+        constructor() {
+          this.reset(true);
+        }
+
+        reset(initial) {
+          this.x = Math.random() * width;
+          this.y = initial ? Math.random() * height : height + 10;
+          this.vx = (Math.random() - 0.5) * 0.4;
+          this.vy = -(0.3 + Math.random() * 0.6);
+          this.size = 0.9 + Math.random() * 1.8;
+          this.alpha = 0.05 + Math.random() * 0.45;
+          this.targetAlpha = 0.4 + Math.random() * 0.5;
+          this.decay = 0.002 + Math.random() * 0.0035;
+          this.color = Math.random() > 0.35 ? '#FFD166' : '#FFF3B0';
+          this.driftAngle = Math.random() * Math.PI * 2;
+          this.driftSpeed = 0.012 + Math.random() * 0.018;
+        }
+
+        update() {
+          this.driftAngle += this.driftSpeed;
+          this.x += this.vx + Math.sin(this.driftAngle) * 0.35;
+          this.y += this.vy;
+          this.alpha += this.decay;
+
+          if (this.alpha > this.targetAlpha) {
+            this.decay = -Math.abs(this.decay);
+          }
+
+          if (this.y < -20 || this.alpha <= 0 || this.x < -20 || this.x > width + 20) {
+            this.reset(false);
+          }
+        }
+
+        draw(ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
+          ctx.fill();
+        }
+      }
+
+      const particles = [];
+      const ambientSparks = [];
+      const isMobile = width < 768;
+
+      const ambientCount = density === 'high' ? 45 : 22;
+      if (enableAmbient) {
+        for (let i = 0; i < ambientCount; i++) {
+          ambientSparks.push(new AmbientSpark());
+        }
+      }
+
+      function createFirework(type, x, y) {
+        const palette = GOLD_PALETTES[Math.floor(Math.random() * GOLD_PALETTES.length)];
+        let particleCount = isMobile ? 140 : 250;
+        if (density === 'low') particleCount = Math.floor(particleCount * 0.6);
+
+        if (type === 'peony') {
+          const baseSpeed = (isMobile ? 3.6 : 5.4) * (0.85 + Math.random() * 0.35);
+          for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = (Math.pow(Math.random(), 0.5)) * baseSpeed;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            const color = palette[Math.floor(Math.random() * palette.length)];
+            const size = 1.4 + Math.random() * 1.6;
+            const friction = 0.957 + Math.random() * 0.013;
+            const gravity = 0.045 + Math.random() * 0.02;
+            const decay = 0.007 + Math.random() * 0.007;
+            particles.push(new Particle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+          }
+        } else if (type === 'willow') {
+          const willowCount = Math.floor(particleCount * 0.9);
+          const baseSpeed = (isMobile ? 3.4 : 4.8);
+          for (let i = 0; i < willowCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = (0.3 + Math.random() * 0.7) * baseSpeed;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed * 0.8;
+            const color = palette[Math.min(palette.length - 1, Math.floor(Math.random() * 3))];
+            const size = 1.6 + Math.random() * 1.5;
+            const friction = 0.965;
+            const gravity = 0.068 + Math.random() * 0.025;
+            const decay = 0.0045 + Math.random() * 0.005;
+            particles.push(new Particle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+          }
+        } else if (type === 'chakra') {
+          const spokes = 8;
+          const perSpoke = Math.floor(particleCount / spokes);
+          const rotationOffset = Math.random() * Math.PI;
+          for (let s = 0; s < spokes; s++) {
+            const spokeAngle = (s / spokes) * Math.PI * 2 + rotationOffset;
+            for (let i = 0; i < perSpoke; i++) {
+              const speedRatio = (i + 1) / perSpoke;
+              const angle = spokeAngle + speedRatio * 0.48;
+              const speed = speedRatio * (isMobile ? 4.0 : 5.8);
+              const vx = Math.cos(angle) * speed;
+              const vy = Math.sin(angle) * speed;
+              const color = palette[i % palette.length];
+              const size = 1.5 + Math.random() * 1.4;
+              const friction = 0.96;
+              const gravity = 0.035;
+              const decay = 0.007 + Math.random() * 0.007;
+              particles.push(new Particle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+            }
+          }
+        }
+      }
+
+      function getRandomLaunchPosition() {
+        const zones = [
+          { xMin: 0.06, xMax: 0.26, yMin: 0.12, yMax: 0.42, weight: 35 },
+          { xMin: 0.74, xMax: 0.94, yMin: 0.12, yMax: 0.42, weight: 35 },
+          { xMin: 0.04, xMax: 0.22, yMin: 0.65, yMax: 0.88, weight: 15 },
+          { xMin: 0.78, xMax: 0.96, yMin: 0.65, yMax: 0.88, weight: 15 }
+        ];
+
+        const totalWeight = zones.reduce((sum, z) => sum + z.weight, 0);
+        let rand = Math.random() * totalWeight;
+        let selectedZone = zones[0];
+        for (const zone of zones) {
+          if (rand < zone.weight) {
+            selectedZone = zone;
+            break;
+          }
+          rand -= zone.weight;
+        }
+
+        return {
+          x: (selectedZone.xMin + Math.random() * (selectedZone.xMax - selectedZone.xMin)) * width,
+          y: (selectedZone.yMin + Math.random() * (selectedZone.yMax - selectedZone.yMin)) * height
+        };
+      }
+
+      const BURST_TYPES = ['peony', 'willow', 'chakra'];
+      let lastBurstTime = 0;
+      let nextBurstInterval = 400;
+
+      setTimeout(() => {
+        createFirework('peony', width * 0.16, height * 0.25);
+      }, 200);
+
+      setTimeout(() => {
+        createFirework('willow', width * 0.84, height * 0.28);
+      }, 700);
+
+      setTimeout(() => {
+        createFirework('chakra', width * 0.13, height * 0.74);
+      }, 1300);
+
+      let animationFrameId;
+      let isVisible = true;
+
+      document.addEventListener('visibilitychange', () => {
+        isVisible = !document.hidden;
+      });
+
+      function animate(timestamp) {
+        if (!isVisible) {
+          animationFrameId = requestAnimationFrame(animate);
+          return;
+        }
+
+        if (timestamp - lastBurstTime > nextBurstInterval) {
+          const pos = getRandomLaunchPosition();
+          const burstType = BURST_TYPES[Math.floor(Math.random() * BURST_TYPES.length)];
+          createFirework(burstType, pos.x, pos.y);
+
+          if (Math.random() < 0.35) {
+            setTimeout(() => {
+              const oppositePos = getRandomLaunchPosition();
+              const secondType = BURST_TYPES[Math.floor(Math.random() * BURST_TYPES.length)];
+              createFirework(secondType, oppositePos.x, oppositePos.y);
+            }, 180 + Math.random() * 220);
+          }
+
+          lastBurstTime = timestamp;
+          nextBurstInterval = (frequency * 1000) * (0.65 + Math.random() * 0.7);
+        }
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.globalCompositeOperation = 'lighter';
+
+        if (enableAmbient) {
+          for (let i = 0; i < ambientSparks.length; i++) {
+            ambientSparks[i].update();
+            ambientSparks[i].draw(ctx);
+          }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.update(timestamp);
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+          } else {
+            p.draw(ctx, timestamp);
+          }
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0;
+
+        animationFrameId = requestAnimationFrame(animate);
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+
+      window.duchLaunchFirework = function(type, x, y) {
+        const targetType = type || BURST_TYPES[Math.floor(Math.random() * BURST_TYPES.length)];
+        const targetX = x !== undefined ? x : width * 0.5;
+        const targetY = y !== undefined ? y : height * 0.3;
+        createFirework(targetType, targetX, targetY);
+      };
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initFireworks);
+    } else {
+      initFireworks();
+    }
+
+    document.addEventListener('shopify:section:load', function(e) {
+      if (e.target.querySelector('#DuchFireworksContainer-{{ section.id }}')) {
+        initFireworks();
+      }
+    });
+  })();
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Duch Diwali Fireworks",
+  "class": "shopify-section--duch-fireworks",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Realistic 60 FPS HTML5 Canvas golden fireworks (peonies, weeping willows, chakras, and drifting embers) inspired by Beyours Diwali night aesthetic. Running IN FRONT of dark backdrop & content with pointer-events: none."
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_fireworks",
+      "label": "Enable Fireworks Animation",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "burst_frequency",
+      "min": 0.8,
+      "max": 3.5,
+      "step": 0.2,
+      "unit": "s",
+      "label": "Average Launch Interval",
+      "default": 1.6,
+      "info": "Lower value = more frequent explosions"
+    },
+    {
+      "type": "select",
+      "id": "particle_density",
+      "label": "Particle Density",
+      "options": [
+        { "value": "low", "label": "Optimized / Battery Saver" },
+        { "value": "high", "label": "Full Luxury (Recommended)" }
+      ],
+      "default": "high"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_ambient_sparks",
+      "label": "Show ambient floating golden embers",
+      "default": true,
+      "info": "Gentle upward drifting golden diya sparkles"
+    },
+    {
+      "type": "number",
+      "id": "z_index",
+      "label": "Z-Index Layer",
+      "default": 9999998,
+      "info": "Set to 9999998 to display in front of the dark backdrop and page content"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Duch Diwali Fireworks"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,1512 @@
+{%- comment -%}
+  DUCH DIWALI SALE 2026 POPUP & FESTIVE CRACKERS
+  Complete standalone Shopify section containing:
+  1. Realistic 60 FPS HTML5 Canvas Diwali Crackers (Peonies, Chakras, Weeping Willows, and Crackling Embers)
+     - Strictly active ONLY while the popup banner is open
+     - Disappears and stops completely once the popup is closed
+  2. Luxury Diwali Modal Card with animated glowing Diya, two discount tiers (Flat 20% + Extra 10% above Rs. 2,000)
+  3. Highlighted Order Dispatch Update
+  4. Real-time "Ends Tomorrow Midnight (7th Nov 12:00 AM)" countdown timer
+  5. "Continue browsing" redirects to https://duchclothing.in/
+  6. Closing via 'X' or backdrop click reveals clean home screen (no crackers on background page)
+{%- endcomment -%}
+
+{%- liquid
+  assign enable_popup = section.settings.enable_popup
+  assign show_on_homepage_only = section.settings.show_on_homepage_only
+  assign frequency = section.settings.frequency
+
+  assign is_visible = true
+  if show_on_homepage_only and request.page_type != 'index'
+    assign is_visible = false
+  endif
+
+  if enable_popup == false
+    assign is_visible = false
+  endif
+
+  if request.design_mode
+    assign is_visible = true
+  endif
+
+  assign button_link = section.settings.button_link
+  if button_link == blank
+    assign button_link = 'https://duchclothing.in/collections/all'
+  endif
+
+  assign continue_url = section.settings.continue_url
+  if continue_url == blank
+    assign continue_url = 'https://duchclothing.in/'
+  endif
+
+  assign timer_mode = section.settings.timer_mode | default: 'tomorrow_midnight'
+  if timer_mode == 'tonight'
+    assign timer_mode = 'tomorrow_midnight'
+  endif
+
+  assign timer_label = section.settings.timer_label
+  if timer_label == blank or timer_label == 'LIMITED TIME OFFER • EXPIRES TONIGHT'
+    assign timer_label = 'LIMITED TIME OFFER • ENDS TOMORROW MIDNIGHT'
+  endif
+
+  assign end_date = section.settings.custom_end_date
+  if end_date == blank or end_date == '2026-11-06T23:59:59'
+    assign end_date = '2026-11-07T00:00:00'
+  endif
+-%}
+
+{%- if is_visible -%}
+<!-- =========================================================================
+     DUCH DIWALI MODAL OVERLAY (CONTAINS BACKDROP, CRACKERS & POPUP BANNER)
+     Crackers are strictly active ONLY while this popup is open!
+     ========================================================================= -->
+<div
+  id="DuchDiwaliModal-{{ section.id }}"
+  class="duch-diwali-overlay{% if request.design_mode and section.settings.editor_preview_open %} duch-diwali-overlay--editor-open{% endif %}"
+  data-section-id="{{ section.id }}"
+  data-delay="{{ section.settings.popup_delay | default: 1.5 }}"
+  data-frequency="{{ frequency | default: 'session' }}"
+  data-timer-mode="{{ timer_mode }}"
+  data-end-date="{{ end_date }}"
+  data-discount-code="{{ section.settings.discount_code | default: 'DIWALI20' }}"
+  data-redirect-url="{{ button_link }}"
+  data-continue-url="{{ continue_url }}"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="DuchDiwaliTitle-{{ section.id }}"
+>
+  <!-- 1. Backdrop Click Dismiss (Reveals Clean Home Screen) -->
+  <div class="duch-diwali-backdrop" data-duch-dismiss></div>
+
+  <!-- 2. Main Festive Modal Card / Banner -->
+  <div class="duch-diwali-card" role="document">
+    <!-- Close Button (X) - Reveals Home Screen -->
+    <button
+      type="button"
+      class="duch-diwali-close"
+      data-duch-dismiss
+      aria-label="Close and return to Home Screen"
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 1L1 13M1 1L13 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <!-- Glowing Golden Diya (Lamp) -->
+    <div class="duch-diwali-diya-wrap" aria-hidden="true">
+      <div class="duch-diwali-flame-aura"></div>
+      <svg class="duch-diwali-diya-svg" viewBox="0 0 64 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="flameGlow-{{ section.id }}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FFF8DC"/>
+            <stop offset="35%" stop-color="#FFB703"/>
+            <stop offset="70%" stop-color="#FB8500"/>
+            <stop offset="100%" stop-color="#D00000" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="flameGrad-{{ section.id }}" x1="32" y1="2" x2="32" y2="28" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFDF0"/>
+            <stop offset="25%" stop-color="#FFE484"/>
+            <stop offset="60%" stop-color="#FFAA00"/>
+            <stop offset="100%" stop-color="#E85D04"/>
+          </linearGradient>
+          <linearGradient id="bowlGrad-{{ section.id }}" x1="12" y1="26" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#E7BA68"/>
+            <stop offset="30%" stop-color="#B87D25"/>
+            <stop offset="70%" stop-color="#7A4C0E"/>
+            <stop offset="100%" stop-color="#3F2204"/>
+          </linearGradient>
+          <linearGradient id="lipGrad-{{ section.id }}" x1="10" y1="26" x2="54" y2="30" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FCE1A0"/>
+            <stop offset="50%" stop-color="#FFEBB8"/>
+            <stop offset="100%" stop-color="#C2872A"/>
+          </linearGradient>
+        </defs>
+
+        <circle cx="32" cy="15" r="15" fill="url(#flameGlow-{{ section.id }})" opacity="0.8" class="duch-flame-pulse"/>
+        <path class="duch-diwali-flame" d="M32 2C32 2 37.5 9.5 37.5 15C37.5 18.5 35 22 32 22C29 22 26.5 18.5 26.5 15C26.5 9.5 32 2 32 2Z" fill="url(#flameGrad-{{ section.id }})"/>
+        <path d="M32 6C32 6 34.5 10.5 34.5 14C34.5 16 33.2 18 32 18C30.8 18 29.5 16 29.5 14C29.5 10.5 32 6 32 6Z" fill="#FFFBE6" opacity="0.9"/>
+        <ellipse cx="32" cy="27" rx="21" ry="3.5" fill="url(#lipGrad-{{ section.id }})"/>
+        <path d="M11 27C11 27 13 46 32 46C51 46 53 27 53 27C51 35 43 43 32 43C21 43 13 35 11 27Z" fill="url(#bowlGrad-{{ section.id }})"/>
+        <path d="M11 27C13 35 21 43 32 43C43 43 51 35 53 27C50 33 42 40 32 40C22 40 14 33 11 27Z" fill="#2E1705" opacity="0.5"/>
+        <path d="M26 45H38C38 45 39 49 42 50C38 50 35 49 32 49C29 49 26 50 22 50C25 49 26 45 26 45Z" fill="#8C5815"/>
+      </svg>
+    </div>
+
+    <!-- Festive Header Titles -->
+    <div class="duch-diwali-header">
+      {%- if section.settings.pre_heading != blank -%}
+        <div class="duch-diwali-pretitle">{{ section.settings.pre_heading | escape }}</div>
+      {%- endif -%}
+
+      <h2 id="DuchDiwaliTitle-{{ section.id }}" class="duch-diwali-title">
+        {{ section.settings.heading | default: 'Duch Diwali Sale 2026' }}
+      </h2>
+
+      {%- if section.settings.badge_tagline != blank -%}
+        <div class="duch-diwali-badge-tagline">
+          <span class="duch-star">✦</span>
+          <span>{{ section.settings.badge_tagline | escape }}</span>
+          <span class="duch-star">✦</span>
+        </div>
+      {%- endif -%}
+    </div>
+
+    <!-- Two Balanced Discount Offer Cards -->
+    <div class="duch-diwali-offers">
+      <!-- Offer 1: FLAT 20% OFF -->
+      <div class="duch-diwali-offer-card">
+        <span class="duch-offer-label">{{ section.settings.offer_1_label | default: 'FLAT' }}</span>
+        <span class="duch-offer-value">{{ section.settings.offer_1_value | default: '20%' }}</span>
+        <span class="duch-offer-subtext">{{ section.settings.offer_1_subtext | default: 'off sitewide' }}</span>
+      </div>
+
+      <div class="duch-diwali-plus" aria-hidden="true">+</div>
+
+      <!-- Offer 2: EXTRA 10% OFF above Rs. 2,000 -->
+      <div class="duch-diwali-offer-card">
+        <span class="duch-offer-label">{{ section.settings.offer_2_label | default: 'EXTRA' }}</span>
+        <span class="duch-offer-value">{{ section.settings.offer_2_value | default: '10%' }}</span>
+        <span class="duch-offer-subtext">{{ section.settings.offer_2_subtext | default: 'on orders above Rs. 2,000' }}</span>
+      </div>
+    </div>
+
+    <!-- Highlighted Order Dispatch Update -->
+    <div class="duch-diwali-dispatch-highlight" role="note">
+      <div class="duch-dispatch-icon-wrap" aria-hidden="true">
+        <svg class="duch-dispatch-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 3H15V17H1V3Z" stroke="#F5C36E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 8H19L23 12V17H15V8Z" stroke="#F5C36E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="5.5" cy="18.5" r="2.5" stroke="#F5C36E" stroke-width="1.7"/>
+          <circle cx="18.5" cy="18.5" r="2.5" stroke="#F5C36E" stroke-width="1.7"/>
+          <path d="M5 8H11" stroke="#F5C36E" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M5 11H9" stroke="#F5C36E" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="duch-dispatch-text-box">
+        <div class="duch-dispatch-heading">
+          {{ section.settings.dispatch_title | default: 'Order Dispatch Update' }}
+        </div>
+        <div class="duch-dispatch-body">
+          {{ section.settings.dispatch_notice | default: 'Orders placed from 6th November 2026 onwards will be dispatched after Diwali, starting 10th November 2026.' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Countdown Timer -->
+    <div class="duch-diwali-timer-section">
+      <div class="duch-timer-title">
+        {{ timer_label }}
+      </div>
+
+      <div class="duch-timer-boxes" aria-live="polite">
+        <div class="duch-timer-box">
+          <span class="duch-timer-digits" data-hours>25</span>
+          <span class="duch-timer-unit">HRS</span>
+        </div>
+        <span class="duch-timer-colon" aria-hidden="true">:</span>
+        <div class="duch-timer-box">
+          <span class="duch-timer-digits" data-minutes>00</span>
+          <span class="duch-timer-unit">MIN</span>
+        </div>
+        <span class="duch-timer-colon" aria-hidden="true">:</span>
+        <div class="duch-timer-box">
+          <span class="duch-timer-digits" data-seconds>00</span>
+          <span class="duch-timer-unit">SEC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="duch-diwali-actions">
+      {%- if section.settings.button_text != blank -%}
+        <a
+          href="{{ button_link }}"
+          class="duch-diwali-btn"
+          data-duch-cta
+        >
+          {{ section.settings.button_text | default: 'CLAIM OFFER & SHOP NOW' }}
+        </a>
+      {%- endif -%}
+
+      <a
+        href="{{ continue_url }}"
+        class="duch-diwali-link"
+        data-duch-continue-link
+      >
+        {{ section.settings.close_link_text | default: 'Continue browsing' }}
+      </a>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="duch-diwali-toast" data-duch-toast aria-hidden="true">
+      ✓ Code {{ section.settings.discount_code | default: 'DIWALI20' }} Applied!
+    </div>
+  </div>
+
+  <!-- 3. Fullscreen Canvas Crackers (OVERLAPPING IN FRONT OF CONTENT BOX) -->
+  <canvas id="DuchDiwaliCrackersCanvas-{{ section.id }}" class="duch-diwali-crackers-canvas" aria-hidden="true"></canvas>
+</div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+  /* Fullscreen Crackers Canvas - strictly active inside popup overlay */
+  .duch-diwali-crackers-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none !important;
+    z-index: 20; /* OVERLAPPING IN FRONT OF CONTENT BOX (z-index 10) SO PARTICLES CASCADE OVER BANNER */
+    display: block;
+  }
+
+  /* Overlay container */
+  .duch-diwali-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .duch-diwali-overlay.duch-diwali-active,
+  .duch-diwali-overlay.duch-diwali-overlay--editor-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* Backdrop with deep warm burgundy tone and soft blur */
+  .duch-diwali-backdrop {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(32, 10, 11, 0.82) 0%, rgba(14, 4, 5, 0.94) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  /* Main Modal Card */
+  .duch-diwali-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 470px;
+    background: radial-gradient(130% 120% at 50% 0%, #361413 0%, #200b0b 45%, #130506 100%);
+    border: 1px solid rgba(224, 180, 110, 0.48);
+    border-radius: 24px;
+    padding: 34px 28px 26px;
+    text-align: center;
+    box-shadow: 
+      0 30px 80px -10px rgba(0, 0, 0, 0.95),
+      0 0 50px rgba(212, 148, 62, 0.2),
+      inset 0 1px 1px rgba(255, 235, 195, 0.35);
+    transform: translateY(22px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .duch-diwali-active .duch-diwali-card,
+  .duch-diwali-overlay--editor-open .duch-diwali-card {
+    transform: translateY(0) scale(1);
+  }
+
+  /* Close Button (X) */
+  .duch-diwali-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(220, 175, 106, 0.35);
+    color: #dfbe82;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    z-index: 30;
+    transition: background 0.2s, transform 0.2s, color 0.2s;
+  }
+
+  .duch-diwali-close:hover {
+    background: rgba(220, 175, 106, 0.2);
+    color: #fff;
+    transform: rotate(90deg);
+  }
+
+  /* Diya Container */
+  .duch-diwali-diya-wrap {
+    position: relative;
+    width: 64px;
+    height: 54px;
+    margin: 0 auto 10px;
+  }
+
+  .duch-diwali-diya-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    filter: drop-shadow(0 6px 14px rgba(235, 110, 20, 0.45));
+  }
+
+  .duch-diwali-flame-aura {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 186, 8, 0.45) 0%, rgba(220, 47, 2, 0.15) 50%, transparent 75%);
+    animation: duchFlameAuraPulse 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes duchFlameAuraPulse {
+    0%, 100% {
+      opacity: 0.65;
+      transform: translateX(-50%) scale(0.92);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.15);
+    }
+  }
+
+  .duch-flame-pulse {
+    animation: duchFlameInner 1.8s ease-in-out infinite alternate;
+  }
+
+  @keyframes duchFlameInner {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    100% { transform: scale(1.08); opacity: 0.95; }
+  }
+
+  .duch-diwali-flame {
+    animation: duchFlameFlicker 1.4s ease-in-out infinite alternate;
+    transform-origin: 32px 22px;
+  }
+
+  @keyframes duchFlameFlicker {
+    0% { transform: scaleY(0.96) scaleX(0.98); }
+    50% { transform: scaleY(1.04) scaleX(1.02) skewX(1deg); }
+    100% { transform: scaleY(1) scaleX(0.99) skewX(-1deg); }
+  }
+
+  /* Header Section */
+  .duch-diwali-header {
+    margin-bottom: 20px;
+  }
+
+  .duch-diwali-pretitle {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #dfbe82;
+    margin-bottom: 6px;
+    opacity: 0.9;
+  }
+
+  .duch-diwali-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.15;
+    color: #fff9ee;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  }
+
+  .duch-diwali-badge-tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #e5b369;
+  }
+
+  .duch-star {
+    font-size: 9px;
+    color: #f7d28b;
+  }
+
+  /* Two Offers Side-by-Side */
+  .duch-diwali-offers {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .duch-diwali-offer-card {
+    flex: 1;
+    background: rgba(22, 6, 7, 0.6);
+    border: 1px solid rgba(224, 180, 110, 0.35);
+    border-radius: 12px;
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 0.25s, border-color 0.25s, background-color 0.25s;
+  }
+
+  .duch-diwali-offer-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 200, 120, 0.7);
+    background: rgba(30, 8, 10, 0.8);
+  }
+
+  .duch-offer-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #c9a674;
+    margin-bottom: 2px;
+  }
+
+  .duch-offer-value {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff6e5;
+    line-height: 1.1;
+    text-shadow: 0 2px 10px rgba(220, 175, 106, 0.3);
+  }
+
+  .duch-offer-subtext {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: #dfbe82;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+    text-align: center;
+  }
+
+  .duch-diwali-plus {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    color: #dcb06e;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  /* Highlighted Order Dispatch Update Box */
+  .duch-diwali-dispatch-highlight {
+    background: linear-gradient(135deg, rgba(65, 22, 18, 0.7) 0%, rgba(35, 10, 12, 0.85) 100%);
+    border: 1px solid rgba(245, 195, 110, 0.55);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 230, 180, 0.2);
+  }
+
+  .duch-dispatch-icon-wrap {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(220, 175, 106, 0.12);
+    border: 1px solid rgba(245, 195, 110, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .duch-dispatch-text-box {
+    flex: 1;
+  }
+
+  .duch-dispatch-heading {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #f7d28b;
+    margin-bottom: 3px;
+  }
+
+  .duch-dispatch-body {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #f5eedf;
+    font-weight: 500;
+  }
+
+  /* Countdown Timer */
+  .duch-diwali-timer-section {
+    margin-bottom: 22px;
+  }
+
+  .duch-timer-title {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #d6b074;
+    margin-bottom: 10px;
+  }
+
+  .duch-timer-boxes {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .duch-timer-box {
+    width: 54px;
+    height: 52px;
+    background: rgba(14, 4, 5, 0.7);
+    border: 1px solid rgba(220, 175, 106, 0.4);
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .duch-timer-digits {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: #f7ebd7;
+    line-height: 1;
+    letter-spacing: 0.5px;
+  }
+
+  .duch-timer-unit {
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #bfa176;
+    margin-top: 3px;
+  }
+
+  .duch-timer-colon {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    color: #dcb06e;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.7;
+    margin: -6px 1px 0;
+  }
+
+  /* Actions */
+  .duch-diwali-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .duch-diwali-btn {
+    display: block;
+    width: 100%;
+    padding: 15px 24px;
+    background: linear-gradient(135deg, #f2c77d 0%, #d89e47 50%, #b87825 100%);
+    color: #1a0808;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(216, 158, 71, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  }
+
+  .duch-diwali-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(216, 158, 71, 0.5);
+    filter: brightness(1.08);
+  }
+
+  .duch-diwali-link {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: #a88d6a;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .duch-diwali-link:hover {
+    color: #e5c38e;
+  }
+
+  /* Toast notification */
+  .duch-diwali-toast {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #180507;
+    border: 1px solid #dcb06e;
+    color: #f7ebd7;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+    pointer-events: none;
+    z-index: 10000005;
+  }
+
+  .duch-diwali-toast.duch-diwali-toast--show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    .duch-diwali-overlay {
+      padding: 14px;
+    }
+    .duch-diwali-card {
+      padding: 28px 18px 22px;
+      border-radius: 20px;
+    }
+    .duch-diwali-title {
+      font-size: 26px;
+    }
+    .duch-offer-value {
+      font-size: 24px;
+    }
+    .duch-dispatch-body {
+      font-size: 11px;
+    }
+    .duch-timer-box {
+      width: 48px;
+      height: 46px;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    // =========================================================================
+    // 1. DIWALI CRACKERS & FIREWORKS ENGINE (STRICTLY ACTIVE IN POPUP BANNER)
+    // =========================================================================
+    function initCrackers() {
+      const canvas = document.getElementById('DuchDiwaliCrackersCanvas-{{ section.id }}') || document.querySelector('.duch-diwali-crackers-canvas');
+      if (!canvas) {
+        return { start: function() {}, stop: function() {} };
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return { start: function() {}, stop: function() {} };
+      }
+
+      let width = window.innerWidth || document.documentElement.clientWidth || 1200;
+      let height = window.innerHeight || document.documentElement.clientHeight || 800;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resize() {
+        width = window.innerWidth || document.documentElement.clientWidth || 1200;
+        height = window.innerHeight || document.documentElement.clientHeight || 800;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.scale(dpr, dpr);
+      }
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      const GOLD_PALETTES = [
+        ['#FFFFFF', '#FFE484', '#FFBA08', '#F48C06', '#DC2F02'],
+        ['#FFFDF0', '#FCE1A0', '#E5A93C', '#C27814', '#9D0208'],
+        ['#FFFFFF', '#FFD166', '#FF9F1C', '#E85D04', '#D00000'],
+        ['#FFFBE6', '#F3C969', '#FAA307', '#A43A20', '#631313']
+      ];
+
+      class CrackerParticle {
+        constructor(x, y, vx, vy, color, size, friction, gravity, decay, hasTrail) {
+          this.x = x;
+          this.y = y;
+          this.vx = vx;
+          this.vy = vy;
+          this.color = color;
+          this.size = size;
+          this.friction = friction;
+          this.gravity = gravity;
+          this.decay = decay;
+          this.alpha = 1.0;
+          this.hasTrail = hasTrail;
+          this.history = [];
+          this.maxHistory = hasTrail ? Math.floor(4 + Math.random() * 4) : 0;
+          this.flickerSpeed = 0.18 + Math.random() * 0.28;
+          this.flickerOffset = Math.random() * Math.PI * 2;
+        }
+
+        update(time) {
+          if (this.hasTrail) {
+            this.history.push({ x: this.x, y: this.y });
+            if (this.history.length > this.maxHistory) {
+              this.history.shift();
+            }
+          }
+
+          this.vx *= this.friction;
+          this.vy *= this.friction;
+          this.vy += this.gravity;
+
+          this.x += this.vx;
+          this.y += this.vy;
+
+          this.alpha -= this.decay;
+        }
+
+        draw(ctx, time) {
+          if (this.alpha <= 0) return;
+
+          const flicker = 0.84 + Math.sin(time * this.flickerSpeed + this.flickerOffset) * 0.16;
+          const currentAlpha = Math.max(0, Math.min(1, this.alpha * flicker));
+
+          if (this.hasTrail && this.history.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.history[0].x, this.history[0].y);
+            for (let i = 1; i < this.history.length; i++) {
+              ctx.lineTo(this.history[i].x, this.history[i].y);
+            }
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = this.color;
+            ctx.globalAlpha = currentAlpha * 0.72;
+            ctx.lineWidth = this.size * 0.95;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = currentAlpha;
+          ctx.fill();
+
+          if (this.size > 1.6 && currentAlpha > 0.35) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.globalAlpha = currentAlpha * 0.9;
+            ctx.fill();
+          }
+        }
+      }
+
+      class AmbientSpark {
+        constructor() {
+          this.reset(true);
+        }
+
+        reset(initial) {
+          this.x = Math.random() * width;
+          this.y = initial ? Math.random() * height : height + 10;
+          this.vx = (Math.random() - 0.5) * 0.4;
+          this.vy = -(0.3 + Math.random() * 0.6);
+          this.size = 0.9 + Math.random() * 1.8;
+          this.alpha = 0.05 + Math.random() * 0.45;
+          this.targetAlpha = 0.4 + Math.random() * 0.5;
+          this.decay = 0.002 + Math.random() * 0.0035;
+          this.color = Math.random() > 0.35 ? '#FFD166' : '#FFF3B0';
+          this.driftAngle = Math.random() * Math.PI * 2;
+          this.driftSpeed = 0.012 + Math.random() * 0.018;
+        }
+
+        update() {
+          this.driftAngle += this.driftSpeed;
+          this.x += this.vx + Math.sin(this.driftAngle) * 0.35;
+          this.y += this.vy;
+          this.alpha += this.decay;
+
+          if (this.alpha > this.targetAlpha) {
+            this.decay = -Math.abs(this.decay);
+          }
+
+          if (this.y < -20 || this.alpha <= 0 || this.x < -20 || this.x > width + 20) {
+            this.reset(false);
+          }
+        }
+
+        draw(ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
+          ctx.fill();
+        }
+      }
+
+      const particles = [];
+      const ambientSparks = [];
+      const isMobile = width < 768;
+
+      function launchCracker(type, x, y) {
+        if (!isRunning) return;
+        const palette = GOLD_PALETTES[Math.floor(Math.random() * GOLD_PALETTES.length)];
+        const particleCount = isMobile ? 120 : 220;
+
+        if (type === 'peony') {
+          const baseSpeed = (isMobile ? 3.6 : 5.2) * (0.85 + Math.random() * 0.35);
+          for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.pow(Math.random(), 0.5) * baseSpeed;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            const color = palette[Math.floor(Math.random() * palette.length)];
+            const size = 1.4 + Math.random() * 1.6;
+            const friction = 0.957 + Math.random() * 0.013;
+            const gravity = 0.045 + Math.random() * 0.02;
+            const decay = 0.007 + Math.random() * 0.007;
+            particles.push(new CrackerParticle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+          }
+        } else if (type === 'willow') {
+          const willowCount = Math.floor(particleCount * 0.9);
+          const baseSpeed = (isMobile ? 3.4 : 4.8);
+          for (let i = 0; i < willowCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = (0.3 + Math.random() * 0.7) * baseSpeed;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed * 0.8;
+            const color = palette[Math.min(palette.length - 1, Math.floor(Math.random() * 3))];
+            const size = 1.6 + Math.random() * 1.5;
+            const friction = 0.965;
+            const gravity = 0.068 + Math.random() * 0.025;
+            const decay = 0.0045 + Math.random() * 0.005;
+            particles.push(new CrackerParticle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+          }
+        } else if (type === 'chakra') {
+          const spokes = 8;
+          const perSpoke = Math.floor(particleCount / spokes);
+          const rotationOffset = Math.random() * Math.PI;
+          for (let s = 0; s < spokes; s++) {
+            const spokeAngle = (s / spokes) * Math.PI * 2 + rotationOffset;
+            for (let i = 0; i < perSpoke; i++) {
+              const speedRatio = (i + 1) / perSpoke;
+              const angle = spokeAngle + speedRatio * 0.48;
+              const speed = speedRatio * (isMobile ? 4.0 : 5.8);
+              const vx = Math.cos(angle) * speed;
+              const vy = Math.sin(angle) * speed;
+              const color = palette[i % palette.length];
+              const size = 1.5 + Math.random() * 1.4;
+              const friction = 0.96;
+              const gravity = 0.035;
+              const decay = 0.007 + Math.random() * 0.007;
+              particles.push(new CrackerParticle(x, y, vx, vy, color, size, friction, gravity, decay, true));
+            }
+          }
+        }
+      }
+
+      // Calculate dynamic burst points that directly frame and illuminate the popup card
+      function getBurstPosition() {
+        const modalEl = document.getElementById('DuchDiwaliModal-{{ section.id }}') || document.querySelector('.duch-diwali-overlay');
+        const cardEl = modalEl ? modalEl.querySelector('.duch-diwali-card') : null;
+        if (cardEl) {
+          const r = cardEl.getBoundingClientRect();
+          const points = [
+            { x: r.left + r.width * 0.12, y: Math.max(30, r.top + 25) },
+            { x: r.right - r.width * 0.12, y: Math.max(30, r.top + 25) },
+            { x: r.left + r.width * 0.5, y: Math.max(25, r.top - 20) },
+            { x: Math.max(25, r.left - 25), y: r.top + r.height * 0.42 },
+            { x: Math.min(width - 25, r.right + 25), y: r.top + r.height * 0.42 },
+            { x: r.left + r.width * 0.22, y: Math.min(height - 25, r.bottom - 10) },
+            { x: r.right - r.width * 0.22, y: Math.min(height - 25, r.bottom - 10) }
+          ];
+          return points[Math.floor(Math.random() * points.length)];
+        }
+        return { x: width * 0.5, y: height * 0.3 };
+      }
+
+      const TYPES = ['peony', 'willow', 'chakra'];
+      let lastBurstTime = 0;
+      let nextBurstInterval = 400;
+      let isRunning = false;
+      let animFrameId = null;
+      let burstTimeouts = [];
+
+      let isTabVisible = true;
+      document.addEventListener('visibilitychange', () => {
+        isTabVisible = !document.hidden;
+      });
+
+      function animateCrackers(timestamp) {
+        if (!isRunning) return;
+
+        if (!isTabVisible) {
+          animFrameId = requestAnimationFrame(animateCrackers);
+          return;
+        }
+
+        if (timestamp - lastBurstTime > nextBurstInterval) {
+          const pos = getBurstPosition();
+          const burstType = TYPES[Math.floor(Math.random() * TYPES.length)];
+          launchCracker(burstType, pos.x, pos.y);
+
+          // Occasional dual burst
+          if (Math.random() < 0.4) {
+            const t = setTimeout(() => {
+              if (!isRunning) return;
+              const oppositePos = getBurstPosition();
+              const secondType = TYPES[Math.floor(Math.random() * TYPES.length)];
+              launchCracker(secondType, oppositePos.x, oppositePos.y);
+            }, 180 + Math.random() * 220);
+            burstTimeouts.push(t);
+          }
+
+          lastBurstTime = timestamp;
+          nextBurstInterval = 1000 + Math.random() * 1200;
+        }
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        ctx.globalCompositeOperation = 'lighter';
+
+        for (let i = 0; i < ambientSparks.length; i++) {
+          ambientSparks[i].update();
+          ambientSparks[i].draw(ctx);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.update(timestamp);
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+          } else {
+            p.draw(ctx, timestamp);
+          }
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0;
+
+        if (isRunning) {
+          animFrameId = requestAnimationFrame(animateCrackers);
+        }
+      }
+
+      function startCrackers() {
+        if (isRunning) return;
+        isRunning = true;
+        resize();
+        ambientSparks.length = 0;
+        for (let i = 0; i < (isMobile ? 24 : 45); i++) {
+          ambientSparks.push(new AmbientSpark());
+        }
+        lastBurstTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+        nextBurstInterval = 250;
+
+        // Immediate burst cascade framing the popup banner
+        const modalEl = document.getElementById('DuchDiwaliModal-{{ section.id }}') || document.querySelector('.duch-diwali-overlay');
+        const cardEl = modalEl ? modalEl.querySelector('.duch-diwali-card') : null;
+        let leftX = width * 0.25, rightX = width * 0.75, topY = height * 0.25;
+        if (cardEl) {
+          const r = cardEl.getBoundingClientRect();
+          leftX = r.left + r.width * 0.12;
+          rightX = r.right - r.width * 0.12;
+          topY = r.top + 30;
+        }
+
+        burstTimeouts.push(setTimeout(() => { if (isRunning) launchCracker('peony', leftX, topY); }, 100));
+        burstTimeouts.push(setTimeout(() => { if (isRunning) launchCracker('willow', rightX, topY); }, 350));
+        burstTimeouts.push(setTimeout(() => { if (isRunning) launchCracker('chakra', (leftX + rightX) * 0.5, Math.max(30, topY - 50)); }, 750));
+        burstTimeouts.push(setTimeout(() => { if (isRunning) launchCracker('peony', rightX, topY + 120); }, 1200));
+
+        animFrameId = requestAnimationFrame(animateCrackers);
+      }
+
+      function stopCrackers() {
+        isRunning = false;
+        if (animFrameId) {
+          cancelAnimationFrame(animFrameId);
+          animFrameId = null;
+        }
+        burstTimeouts.forEach(t => clearTimeout(t));
+        burstTimeouts = [];
+        particles.length = 0;
+        ambientSparks.length = 0;
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      window.duchLaunchCracker = function(type, x, y) {
+        if (!isRunning) return;
+        const targetType = type || TYPES[Math.floor(Math.random() * TYPES.length)];
+        const targetX = x !== undefined ? x : width * 0.5;
+        const targetY = y !== undefined ? y : height * 0.3;
+        launchCracker(targetType, targetX, targetY);
+      };
+
+      return {
+        start: startCrackers,
+        stop: stopCrackers
+      };
+    }
+
+    // =========================================================================
+    // 2. DIWALI POPUP MODAL LOGIC
+    // =========================================================================
+    function initDuchDiwaliModal(crackersEngine) {
+      const modal = document.getElementById('DuchDiwaliModal-{{ section.id }}');
+      if (!modal) return;
+
+      const sectionId = modal.getAttribute('data-section-id');
+      const delay = parseFloat(modal.getAttribute('data-delay')) || 1.5;
+      const frequency = modal.getAttribute('data-frequency') || 'session';
+      const timerMode = modal.getAttribute('data-timer-mode') || 'tomorrow_midnight';
+      const customEndDateStr = modal.getAttribute('data-end-date');
+      const discountCode = modal.getAttribute('data-discount-code');
+      const redirectUrl = modal.getAttribute('data-redirect-url') || 'https://duchclothing.in/collections/all';
+      const continueUrl = modal.getAttribute('data-continue-url') || 'https://duchclothing.in/';
+      const storageKey = 'duch_diwali_modal_seen_' + sectionId;
+
+      const isDesignMode = {% if request.design_mode %}true{% else %}false{% endif %};
+
+      function shouldShow() {
+        if (isDesignMode) return true;
+
+        if (window.location.search.indexOf('preview') !== -1 || window.location.hash.indexOf('preview') !== -1) {
+          return true;
+        }
+
+        try {
+          if (frequency === 'always') return true;
+          if (frequency === 'session') {
+            return !sessionStorage.getItem(storageKey);
+          }
+          if (frequency === 'day') {
+            const lastSeen = localStorage.getItem(storageKey);
+            if (!lastSeen) return true;
+            const now = new Date().getTime();
+            const oneDay = 24 * 60 * 60 * 1000;
+            return (now - parseInt(lastSeen, 10)) > oneDay;
+          }
+          if (frequency === 'once') {
+            return !localStorage.getItem(storageKey);
+          }
+        } catch (e) {
+          return true;
+        }
+        return true;
+      }
+
+      function markSeen() {
+        try {
+          if (frequency === 'session') {
+            sessionStorage.setItem(storageKey, 'true');
+          } else if (frequency === 'day' || frequency === 'once') {
+            localStorage.setItem(storageKey, new Date().getTime().toString());
+          }
+        } catch (e) {}
+      }
+
+      function openModal() {
+        modal.classList.add('duch-diwali-active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (crackersEngine && crackersEngine.start) {
+          crackersEngine.start();
+        }
+      }
+
+      function closeModal() {
+        modal.classList.remove('duch-diwali-active');
+        modal.classList.remove('duch-diwali-overlay--editor-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (crackersEngine && crackersEngine.stop) {
+          crackersEngine.stop();
+        }
+        markSeen();
+      }
+
+      const dismissBtns = modal.querySelectorAll('[data-duch-dismiss]');
+      dismissBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          closeModal();
+        });
+      });
+
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('duch-diwali-active')) {
+          closeModal();
+        }
+      });
+
+      const continueLink = modal.querySelector('[data-duch-continue-link]');
+      if (continueLink) {
+        continueLink.addEventListener('click', function(e) {
+          markSeen();
+          if (continueUrl) {
+            window.location.href = continueUrl;
+          }
+        });
+      }
+
+      const ctaBtn = modal.querySelector('[data-duch-cta]');
+      const toast = modal.querySelector('[data-duch-toast]');
+
+      if (ctaBtn) {
+        ctaBtn.addEventListener('click', function(e) {
+          if (discountCode) {
+            e.preventDefault();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(discountCode).catch(() => {});
+            }
+
+            if (toast) {
+              toast.classList.add('duch-diwali-toast--show');
+            }
+
+            setTimeout(function() {
+              window.location.href = '/discount/' + encodeURIComponent(discountCode) + '?redirect=' + encodeURIComponent(redirectUrl);
+            }, 500);
+          }
+        });
+      }
+
+      const hoursEl = modal.querySelector('[data-hours]');
+      const minutesEl = modal.querySelector('[data-minutes]');
+      const secondsEl = modal.querySelector('[data-seconds]');
+
+      function getTargetTime() {
+        if (timerMode === 'custom' && customEndDateStr) {
+          const parsed = new Date(customEndDateStr.replace(' ', 'T')).getTime();
+          if (!isNaN(parsed)) return parsed;
+        }
+        if (timerMode === 'tonight') {
+          const tonight = new Date();
+          tonight.setHours(23, 59, 59, 999);
+          return tonight.getTime();
+        }
+        // Sale ends tomorrow midnight: 7th November 2026 at 12:00 AM (00:00:00)
+        const targetNov7 = new Date(2026, 10, 7, 0, 0, 0); // Month 10 is November in JS (0-indexed)
+        const now = new Date();
+        if (targetNov7.getTime() > now.getTime()) {
+          return targetNov7.getTime();
+        }
+        // Fallback for demo/testing after Nov 7: tomorrow midnight
+        const tomorrowMidnight = new Date();
+        tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
+        tomorrowMidnight.setHours(24, 0, 0, 0);
+        return tomorrowMidnight.getTime();
+      }
+
+      let targetTime = getTargetTime();
+
+      function updateCountdown() {
+        const now = new Date().getTime();
+        let diff = targetTime - now;
+
+        if (diff <= 0) {
+          if (timerMode === 'tonight') {
+            targetTime = getTargetTime();
+            diff = targetTime - now;
+          } else {
+            diff = 0;
+          }
+        }
+
+        const totalHours = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff / (1000 * 60)) % 60);
+        const s = Math.floor((diff / 1000) % 60);
+
+        if (hoursEl) hoursEl.textContent = String(totalHours).padStart(2, '0');
+        if (minutesEl) minutesEl.textContent = String(m).padStart(2, '0');
+        if (secondsEl) secondsEl.textContent = String(s).padStart(2, '0');
+      }
+
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+
+      // Auto-trigger popup
+      if (isDesignMode) {
+        openModal();
+      } else if (shouldShow()) {
+        setTimeout(function() {
+          openModal();
+        }, delay * 1000);
+      }
+
+      window.openDuchDiwaliModal = openModal;
+      window.closeDuchDiwaliModal = closeModal;
+    }
+
+    // Initialize both Crackers & Modal
+    function initAll() {
+      const crackersEngine = initCrackers();
+      initDuchDiwaliModal(crackersEngine);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+      initAll();
+    }
+
+    document.addEventListener('shopify:section:load', function(e) {
+      if (e.target.querySelector('#DuchDiwaliModal-{{ section.id }}')) {
+        initAll();
+      }
+    });
+
+    document.addEventListener('shopify:section:select', function(e) {
+      if (e.target.querySelector('#DuchDiwaliModal-{{ section.id }}') && window.openDuchDiwaliModal) {
+        window.openDuchDiwaliModal();
+      }
+    });
+
+    document.addEventListener('shopify:section:deselect', function(e) {
+      if (e.target.querySelector('#DuchDiwaliModal-{{ section.id }}') && window.closeDuchDiwaliModal) {
+        window.closeDuchDiwaliModal();
+      }
+    });
+  })();
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Duch Diwali Sale Popup",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Popup Visibility & Timing"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_popup",
+      "label": "Enable Diwali Sale Popup & Crackers",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_homepage_only",
+      "label": "Show on Homepage only",
+      "default": true,
+      "info": "When checked, popup and crackers will only appear on the homepage"
+    },
+    {
+      "type": "checkbox",
+      "id": "editor_preview_open",
+      "label": "Keep open in Theme Editor preview",
+      "default": true,
+      "info": "Allows you to customize the popup inside Shopify Admin without closing"
+    },
+    {
+      "type": "range",
+      "id": "popup_delay",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "unit": "s",
+      "label": "Popup display delay",
+      "default": 1.5
+    },
+    {
+      "type": "select",
+      "id": "frequency",
+      "label": "Show Frequency",
+      "options": [
+        { "value": "always", "label": "Every page load (Testing / High Urgency)" },
+        { "value": "session", "label": "Once per browser session (Recommended)" },
+        { "value": "day", "label": "Once every 24 hours" },
+        { "value": "once", "label": "Once per user device" }
+      ],
+      "default": "session"
+    },
+    {
+      "type": "header",
+      "content": "Festive Header"
+    },
+    {
+      "type": "text",
+      "id": "pre_heading",
+      "label": "Pre-heading Tagline",
+      "default": "FESTIVE EXCLUSIVE"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Main Heading",
+      "default": "Duch Diwali Sale 2026"
+    },
+    {
+      "type": "text",
+      "id": "badge_tagline",
+      "label": "Divider Badge Tagline",
+      "default": "SPECIAL DIWALI SALE"
+    },
+    {
+      "type": "header",
+      "content": "Discount Tier 1 (FLAT 20%)"
+    },
+    {
+      "type": "text",
+      "id": "offer_1_label",
+      "label": "Tier 1 Top Label",
+      "default": "FLAT"
+    },
+    {
+      "type": "text",
+      "id": "offer_1_value",
+      "label": "Tier 1 Discount Value",
+      "default": "20%"
+    },
+    {
+      "type": "text",
+      "id": "offer_1_subtext",
+      "label": "Tier 1 Subtext",
+      "default": "off sitewide"
+    },
+    {
+      "type": "header",
+      "content": "Discount Tier 2 (EXTRA 10%)"
+    },
+    {
+      "type": "text",
+      "id": "offer_2_label",
+      "label": "Tier 2 Top Label",
+      "default": "EXTRA"
+    },
+    {
+      "type": "text",
+      "id": "offer_2_value",
+      "label": "Tier 2 Discount Value",
+      "default": "10%"
+    },
+    {
+      "type": "text",
+      "id": "offer_2_subtext",
+      "label": "Tier 2 Subtext",
+      "default": "on orders above Rs. 2,000"
+    },
+    {
+      "type": "header",
+      "content": "Highlighted Order Dispatch Update"
+    },
+    {
+      "type": "text",
+      "id": "dispatch_title",
+      "label": "Dispatch Notice Heading",
+      "default": "Order Dispatch Update"
+    },
+    {
+      "type": "textarea",
+      "id": "dispatch_notice",
+      "label": "Dispatch Notice Body",
+      "default": "Orders placed from 6th November 2026 onwards will be dispatched after Diwali, starting 10th November 2026.",
+      "info": "Highlighted with golden illuminated border and delivery icon"
+    },
+    {
+      "type": "header",
+      "content": "Countdown Timer (Ends Tomorrow Midnight)"
+    },
+    {
+      "type": "text",
+      "id": "timer_label",
+      "label": "Timer Label",
+      "default": "LIMITED TIME OFFER • ENDS TOMORROW MIDNIGHT"
+    },
+    {
+      "type": "select",
+      "id": "timer_mode",
+      "label": "Countdown Mode",
+      "options": [
+        { "value": "tomorrow_midnight", "label": "Ends Tomorrow Midnight (7th Nov 12:00 AM)" },
+        { "value": "tonight", "label": "Expires Tonight (Midnight 11:59:59 PM)" },
+        { "value": "custom", "label": "Custom End Date & Time" }
+      ],
+      "default": "tomorrow_midnight"
+    },
+    {
+      "type": "text",
+      "id": "custom_end_date",
+      "label": "Custom End Date (ISO Format)",
+      "default": "2026-11-07T00:00:00",
+      "info": "Used only if Countdown Mode is set to Custom End Date & Time"
+    },
+    {
+      "type": "header",
+      "content": "Call-To-Action & Redirects"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "CTA Button Text",
+      "default": "CLAIM OFFER & SHOP NOW"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "CTA Button Link",
+      "info": "Optional link override. Defaults to /collections/all if left blank"
+    },
+    {
+      "type": "text",
+      "id": "discount_code",
+      "label": "Shopify Discount Code (Auto-Applied)",
+      "default": "DIWALI20",
+      "info": "Clicking the CTA button automatically copies the coupon code and pre-applies it at checkout"
+    },
+    {
+      "type": "text",
+      "id": "close_link_text",
+      "label": "Continue Browsing Link Text",
+      "default": "Continue browsing"
+    },
+    {
+      "type": "url",
+      "id": "continue_url",
+      "label": "Continue Browsing Redirect URL",
+      "info": "Optional link override. Defaults to https://duchclothing.in/ if left blank"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Duch Diwali Sale Popup"
+    }
+  ]
+}
+{% endschema %}

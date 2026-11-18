@@ -1,0 +1,3237 @@
+{%- # theme-check-disable ImgWidthAndHeight, RemoteAsset -%}
+{% comment %}
+  DUCH — Shop By Look (Categorized Grid & Quick View Modal)
+  - 4 Category Filter Tabs: Formals, Casuals, Party Looks, Vacation Looks.
+  - Full Mobile Compatibility: Capsule track starts flush, no cut off tabs, smooth scroll.
+  - Per-Category Fallback: If a category has no blocks yet (e.g. Vacation Looks), curated looks render automatically.
+  - Clean Look Cards: Outside size dropdowns removed; single "SHOP THE LOOK" button.
+  - Quick View Modal: 6-photo image carousel with arrows & mobile touch swipe, shirt size selector, pant size selector, Add to Cart & Buy It Now buttons.
+  - Interactive Size Chart Modal: Opens product-specific size chart for Shirts (Collar, Chest, Shoulder, Length, Sleeve) and Trousers (Waist, Hip, Length, Inseam, Thigh) with Inches/CM toggle and How To Measure guide.
+  - Shopify Theme Editor Integration: Selecting any block automatically switches to that category's tab.
+{% endcomment %}
+
+{%- liquid
+  assign section_id = section.id
+  assign heading = section.settings.heading | default: 'SHOP BY LOOK'
+  assign subheading = section.settings.subheading | default: 'Perfectly paired. Effortlessly styled.'
+  assign badge_text = section.settings.badge_text | default: 'PAIR & SAVE ₹400 • FREE SHIPPING'
+  assign bg_color = section.settings.bg_color | default: '#0d0d0d'
+  assign card_bg = section.settings.card_bg | default: '#161616'
+  assign text_color = section.settings.text_color | default: '#ffffff'
+  assign accent_color = section.settings.accent_color | default: '#ffffff'
+  assign discount_color = section.settings.discount_color | default: '#4ade80'
+  assign active_cat = section.settings.default_tab | default: 'formals'
+
+  # Global custom size chart images from section settings
+  assign g_shirt_chart = ''
+  if section.settings.global_shirt_size_chart != blank
+    assign g_shirt_chart = section.settings.global_shirt_size_chart | image_url: width: 1200
+  endif
+
+  assign g_pant_chart = ''
+  if section.settings.global_pant_size_chart != blank
+    assign g_pant_chart = section.settings.global_pant_size_chart | image_url: width: 1200
+  endif
+
+  # Count user-added blocks per category
+  assign formals_count = 0
+  assign casuals_count = 0
+  assign party_count = 0
+  assign vacation_count = 0
+
+  for block in section.blocks
+    assign b_cat = block.settings.category | default: 'formals' | downcase | strip
+    if b_cat == 'formals'
+      assign formals_count = formals_count | plus: 1
+    elsif b_cat == 'casuals'
+      assign casuals_count = casuals_count | plus: 1
+    elsif b_cat == 'party'
+      assign party_count = party_count | plus: 1
+    elsif b_cat == 'vacation'
+      assign vacation_count = vacation_count | plus: 1
+    endif
+  endfor
+-%}
+
+<style>
+  #ShopByLook-{{ section_id }} {
+    position: relative;
+    background-color: {{ bg_color }};
+    color: {{ text_color }};
+    padding-top: {{ section.settings.padding_top | default: 40 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | default: 60 }}px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  #ShopByLook-{{ section_id }} *,
+  #ShopByLook-{{ section_id }} *::before,
+  #ShopByLook-{{ section_id }} *::after {
+    box-sizing: border-box;
+  }
+
+  .sbl-container {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* Header */
+  .sbl-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .sbl-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    color: {{ text_color }};
+  }
+
+  .sbl-subheading {
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0 0 16px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .sbl-promo-badge {
+    display: inline-block;
+    background: #fbf7ee;
+    color: #111111;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 4px;
+    margin-top: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  /* 4 Category Filter Tabs — Capsule Track & Pill Design */
+  .sbl-tabs-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 28px;
+    padding: 0 16px;
+    width: 100%;
+  }
+
+  .sbl-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px;
+    background: #181818;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9999px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+    max-width: 100%;
+  }
+
+  .sbl-tab-btn {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    border: none;
+    border-radius: 9999px;
+    padding: 9px 20px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sbl-tab-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .sbl-tab-btn.is-active {
+    background: #ffffff;
+    color: #0e0e0e;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .sbl-tabs-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: 0 8px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+
+    .sbl-tabs {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      background: #181818;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+      padding: 3px;
+      gap: 2px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .sbl-tab-btn {
+      width: 100%;
+      min-width: 0;
+      padding: 8px 2px;
+      font-size: clamp(0.64rem, 2.6vw, 0.74rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      text-align: center;
+      border-radius: 9999px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    .sbl-tab-btn.is-active {
+      background: #ffffff;
+      color: #0e0e0e;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  /* Look Grid */
+  .sbl-grid {
+    display: grid;
+    grid-template-columns: repeat({{ section.settings.columns_desktop | default: 4 }}, 1fr);
+    gap: 20px 16px;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Look Card */
+  .sbl-card {
+    background: {{ card_bg }};
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .sbl-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .sbl-card.is-hidden {
+    display: none !important;
+  }
+
+  /* Card Image */
+  .sbl-card-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: #1e1e1e;
+    cursor: pointer;
+  }
+
+  .sbl-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    transition: transform 0.5s ease;
+  }
+
+  .sbl-card:hover .sbl-card-img {
+    transform: scale(1.04);
+  }
+
+  .sbl-photos-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* Card Details */
+  .sbl-card-details {
+    padding: 14px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    background: {{ card_bg }};
+  }
+
+  .sbl-card-title {
+    font-size: 0.96rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 8px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+  }
+
+  .sbl-card-title:hover {
+    text-decoration: underline;
+  }
+
+  .sbl-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .sbl-price-current {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .sbl-price-compare {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: line-through;
+  }
+
+  .sbl-price-save {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: {{ discount_color }};
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* Single SHOP THE LOOK Button on Card */
+  .sbl-btn-shop {
+    width: 100%;
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 4px;
+    padding: 11px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: auto;
+  }
+
+  .sbl-btn-shop:hover {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+
+  /* Empty State */
+  .sbl-empty-state {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* =========================================================================
+     QUICK VIEW / SHOP THE LOOK MODAL
+     ========================================================================= */
+  .sbl-modal-root {
+    position: relative;
+    z-index: 2147483647 !important;
+  }
+
+  .sbl-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sbl-modal.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .sbl-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .sbl-modal-dialog {
+    position: relative;
+    background: #141414;
+    color: #ffffff;
+    width: 100%;
+    max-width: 960px;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+    z-index: 2;
+    transform: scale(0.96) translateY(12px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sbl-modal.is-active .sbl-modal-dialog {
+    transform: scale(1) translateY(0);
+  }
+
+  .sbl-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .sbl-modal-close:hover {
+    background: #ffffff;
+    color: #000000;
+    transform: scale(1.08);
+  }
+
+  .sbl-modal-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    min-height: 520px;
+  }
+
+  /* Modal Left: 6-Photo Carousel */
+  .sbl-gallery-wrap {
+    position: relative;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    user-select: none;
+  }
+
+  .sbl-gallery-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .sbl-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: scale(0.97);
+  }
+
+  .sbl-slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  .sbl-slide-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    border-radius: 6px;
+  }
+
+  /* Gallery Arrows */
+  .sbl-gallery-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #111111;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .sbl-gallery-arrow:hover {
+    background: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .sbl-gallery-arrow--prev {
+    left: 12px;
+  }
+
+  .sbl-gallery-arrow--next {
+    right: 12px;
+  }
+
+  /* Gallery Thumbnails */
+  .sbl-gallery-thumbs {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+
+  .sbl-gallery-thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sbl-thumb-btn {
+    width: 50px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    padding: 0;
+    background: #222222;
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.2s, border-color 0.2s;
+  }
+
+  .sbl-thumb-btn:hover {
+    opacity: 0.9;
+  }
+
+  .sbl-thumb-btn.is-active {
+    opacity: 1;
+    border-color: #ffffff;
+  }
+
+  .sbl-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Modal Right: Details & Selectors */
+  .sbl-details-wrap {
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sbl-modal-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: {{ discount_color }};
+    margin-bottom: 6px;
+  }
+
+  .sbl-modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 12px;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+
+  .sbl-modal-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .sbl-modal-price {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .sbl-modal-compare {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: line-through;
+  }
+
+  .sbl-modal-save {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #111111;
+    background: {{ discount_color }};
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sbl-discount-banner {
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px dashed rgba(74, 222, 128, 0.35);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 0.8rem;
+    color: #86efac;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  /* Piece Selector Box (Shirt & Pant) */
+  .sbl-piece-box {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .sbl-piece-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .sbl-piece-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+  }
+
+  .sbl-size-chart-link {
+    background: transparent;
+    border: none;
+    font-size: 0.78rem;
+    color: #a1a1aa;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+
+  .sbl-size-chart-link:hover {
+    color: #ffffff;
+  }
+
+  .sbl-size-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sbl-size-pill {
+    background: #1f1f1f;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 42px;
+    text-align: center;
+  }
+
+  .sbl-size-pill:hover {
+    border-color: #ffffff;
+  }
+
+  .sbl-size-pill.is-selected {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+    font-weight: 700;
+  }
+
+  /* Quantity & Total Row */
+  .sbl-qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 18px;
+    padding-top: 6px;
+  }
+
+  .sbl-qty-label {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+  }
+
+  .sbl-qty-ctrl {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    background: #1a1a1a;
+  }
+
+  .sbl-qty-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .sbl-qty-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .sbl-qty-input {
+    width: 36px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+    outline: none;
+  }
+
+  /* Action Buttons */
+  .sbl-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .sbl-btn-add {
+    width: 100%;
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .sbl-btn-add:hover {
+    background: #ececec;
+  }
+
+  .sbl-btn-add:active {
+    transform: scale(0.99);
+  }
+
+  .sbl-btn-buy {
+    width: 100%;
+    background: #000000;
+    color: #ffffff;
+    border: 1.5px solid #ffffff;
+    border-radius: 6px;
+    padding: 13px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sbl-btn-buy:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .sbl-trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 14px;
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* =========================================================================
+     SIZE CHART MODAL STYLES (DUCH LUXURY DESIGN)
+     ========================================================================= */
+  .sbl-sizechart-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s;
+  }
+
+  .sbl-sizechart-modal.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .sbl-sizechart-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .sbl-sizechart-dialog {
+    position: relative;
+    background: #0d0d0f;
+    color: #ffffff;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    border-radius: 14px;
+    overflow-y: auto;
+    border: 1px solid rgba(197, 160, 89, 0.35);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(197, 160, 89, 0.08);
+    z-index: 2;
+    padding: 28px 24px;
+    transform: scale(0.96) translateY(12px);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sbl-sizechart-modal.is-active .sbl-sizechart-dialog {
+    transform: scale(1) translateY(0);
+  }
+
+  .sbl-sc-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+  }
+
+  .sbl-sc-close:hover {
+    background: #c5a059;
+    color: #000000;
+    border-color: #c5a059;
+    transform: scale(1.08);
+  }
+
+  .sbl-sc-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .sbl-sc-brand {
+    font-family: serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.28em;
+    color: #c5a059;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .sbl-sc-star {
+    color: #c5a059;
+    font-size: 0.8rem;
+  }
+
+  .sbl-sc-header {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .sbl-sc-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 4px 0 4px;
+    color: #ffffff;
+  }
+
+  .sbl-sc-subtitle {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+
+  /* Custom Chart Image Wrap */
+  .sbl-sc-custom-img-wrap {
+    margin: 16px 0;
+    text-align: center;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000000;
+    border: 1px solid rgba(197, 160, 89, 0.25);
+  }
+
+  .sbl-sc-custom-img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Size Chart Controls */
+  .sbl-sc-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 16px 0 14px;
+    flex-wrap: wrap;
+  }
+
+  .sbl-sc-tabs {
+    display: inline-flex;
+    background: #17171a;
+    border-radius: 9999px;
+    padding: 3px;
+    border: 1px solid rgba(197, 160, 89, 0.22);
+  }
+
+  .sbl-sc-tab-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 7px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sbl-sc-tab-btn.is-active {
+    background: #c5a059;
+    color: #000000;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .sbl-sc-unit-toggle {
+    display: inline-flex;
+    background: #17171a;
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .sbl-sc-unit-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    padding: 5px 11px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sbl-sc-unit-btn.is-active {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Table Design */
+  .sbl-sc-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 12px 0 16px;
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    border-radius: 8px;
+    background: #09090b;
+  }
+
+  .sbl-sc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+    text-align: center;
+  }
+
+  .sbl-sc-table th,
+  .sbl-sc-table td {
+    padding: 11px 12px;
+    border: 1px solid rgba(197, 160, 89, 0.18);
+    white-space: nowrap;
+  }
+
+  .sbl-sc-table th {
+    background: rgba(197, 160, 89, 0.14);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #c5a059;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+
+  .sbl-sc-table td:first-child {
+    font-weight: 700;
+    color: #c5a059;
+    background: rgba(197, 160, 89, 0.06);
+  }
+
+  .sbl-sc-table tr:hover td {
+    background: rgba(197, 160, 89, 0.08);
+  }
+
+  /* Measurement Guide */
+  .sbl-sc-guide {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(197, 160, 89, 0.18);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 14px;
+  }
+
+  .sbl-sc-guide-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #c5a059;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .sbl-sc-guide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px 14px;
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.45;
+  }
+
+  .sbl-sc-guide-list strong {
+    color: #ffffff;
+  }
+
+  .sbl-sc-monogram {
+    margin-top: 14px;
+    font-family: serif;
+    font-size: 1.8rem;
+    font-style: italic;
+    color: #c5a059;
+    opacity: 0.85;
+    text-align: center;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 991px) {
+    .sbl-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .sbl-modal-dialog {
+      max-height: 94vh;
+    }
+
+    .sbl-modal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .sbl-gallery-wrap {
+      padding: 18px 18px 10px;
+    }
+
+    .sbl-details-wrap {
+      padding: 20px 18px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #ShopByLook-{{ section_id }} {
+      padding-top: 28px;
+      padding-bottom: 40px;
+    }
+
+    .sbl-container {
+      padding: 0 12px;
+    }
+
+    .sbl-header {
+      margin-bottom: 20px;
+    }
+
+    .sbl-title {
+      font-size: 1.6rem;
+    }
+
+    .sbl-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 10px;
+    }
+
+    .sbl-card-details {
+      padding: 10px 8px 12px;
+    }
+
+    .sbl-card-title {
+      font-size: 0.84rem;
+      margin-bottom: 6px;
+    }
+
+    .sbl-price-row {
+      margin-bottom: 10px;
+      gap: 5px;
+    }
+
+    .sbl-price-current {
+      font-size: 0.92rem;
+    }
+
+    .sbl-price-compare {
+      font-size: 0.76rem;
+    }
+
+    .sbl-price-save {
+      font-size: 0.65rem;
+    }
+
+    .sbl-btn-shop {
+      padding: 9px 8px;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+    }
+
+    /* Mobile Modal: Luxury Bottom-Sheet Drawer */
+    .sbl-modal {
+      padding: 0 !important;
+      align-items: flex-end !important;
+      justify-content: center !important;
+      z-index: 2147483647 !important;
+      overflow-y: hidden !important;
+    }
+
+    .sbl-modal-dialog {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: 88vh !important;
+      max-height: 88dvh !important;
+      border-radius: 20px 20px 0 0 !important;
+      margin: 0 !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      overscroll-behavior-y: contain !important;
+      border-left: none !important;
+      border-right: none !important;
+      border-bottom: none !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.95) !important;
+      padding-bottom: max(32px, env(safe-area-inset-bottom, 32px)) !important;
+      transform: translateY(100%) !important;
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .sbl-modal.is-active .sbl-modal-dialog {
+      transform: translateY(0) !important;
+    }
+
+    .sbl-modal-close {
+      position: sticky !important;
+      top: 12px !important;
+      float: right !important;
+      margin-right: 12px !important;
+      margin-bottom: -44px !important;
+      z-index: 100 !important;
+      background: rgba(0, 0, 0, 0.78) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+      color: #ffffff !important;
+      width: 36px !important;
+      height: 36px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    .sbl-modal-grid {
+      grid-template-columns: 1fr !important;
+      display: block !important;
+    }
+
+    .sbl-gallery-wrap {
+      padding: 16px 14px 10px !important;
+    }
+
+    .sbl-details-wrap {
+      padding: 16px 16px 36px !important;
+    }
+
+    /* Mobile Size Chart Bottom-Sheet */
+    .sbl-sizechart-modal {
+      z-index: 2147483647 !important;
+      padding: 0 !important;
+      align-items: flex-end !important;
+      overflow-y: hidden !important;
+    }
+
+    .sbl-sizechart-dialog {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 88dvh !important;
+      border-radius: 20px 20px 0 0 !important;
+      margin: 0 !important;
+      padding: 24px 16px max(32px, env(safe-area-inset-bottom, 32px)) !important;
+      border-bottom: none !important;
+      border-left: none !important;
+      border-right: none !important;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.95) !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    .sbl-sc-title {
+      font-size: 1.15rem;
+    }
+  }
+
+  </style>
+
+<div
+  id="ShopByLook-{{ section_id }}"
+  class="shop-by-look-section"
+  data-section-id="{{ section_id }}"
+  data-global-shirt-chart="{{ g_shirt_chart }}"
+  data-global-pant-chart="{{ g_pant_chart }}"
+>
+  <div class="sbl-container">
+    {%- comment -%} Section Header {%- endcomment -%}
+    <div class="sbl-header">
+      <h2 class="sbl-title">{{ heading }}</h2>
+      {%- if subheading != blank -%}
+        <p class="sbl-subheading">{{ subheading }}</p>
+      {%- endif -%}
+      {%- if badge_text != blank -%}
+        <div>
+          <span class="sbl-promo-badge">{{ badge_text }}</span>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} 4 Category Filter Tabs {%- endcomment -%}
+    <div class="sbl-tabs-wrapper">
+      <div class="sbl-tabs" role="tablist">
+        <button type="button" class="sbl-tab-btn {% if active_cat == 'formals' %}is-active{% endif %}" data-category="formals" role="tab" aria-selected="{% if active_cat == 'formals' %}true{% else %}false{% endif %}">
+          {{ section.settings.tab_1_label | default: 'Formals' }}
+        </button>
+        <button type="button" class="sbl-tab-btn {% if active_cat == 'casuals' %}is-active{% endif %}" data-category="casuals" role="tab" aria-selected="{% if active_cat == 'casuals' %}true{% else %}false{% endif %}">
+          {{ section.settings.tab_2_label | default: 'Casuals' }}
+        </button>
+        <button type="button" class="sbl-tab-btn {% if active_cat == 'party' %}is-active{% endif %}" data-category="party" role="tab" aria-selected="{% if active_cat == 'party' %}true{% else %}false{% endif %}">
+          {{ section.settings.tab_3_label | default: 'Party Looks' }}
+        </button>
+        <button type="button" class="sbl-tab-btn {% if active_cat == 'vacation' %}is-active{% endif %}" data-category="vacation" role="tab" aria-selected="{% if active_cat == 'vacation' %}true{% else %}false{% endif %}">
+          {{ section.settings.tab_4_label | default: 'Vacation Looks' }}
+        </button>
+      </div>
+    </div>
+
+    {%- comment -%} Look Cards Grid {%- endcomment -%}
+    <div class="sbl-grid" id="SBLGrid-{{ section_id }}">
+      {%- comment -%} 1. Render Merchant-Configured Blocks {%- endcomment -%}
+      {%- if section.blocks.size > 0 -%}
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign cat = block.settings.category | default: 'formals' | downcase | strip
+            if block.settings.title != blank
+              assign look_title = block.settings.title
+            else
+              assign look_title = 'Look ' | append: forloop.index
+            endif
+            assign shirt_prod = block.settings.shirt_product
+            assign pant_prod = block.settings.pant_product
+            assign photos_count = block.settings.photos_badge | default: '6 Photos'
+
+            # Calculate Pricing
+            assign s_price = shirt_prod.price | default: 139900
+            assign p_price = pant_prod.price | default: 139900
+            assign raw_compare = s_price | plus: p_price
+            assign calc_price = raw_compare | minus: 40000
+
+            if block.settings.custom_price != blank
+              assign display_price = block.settings.custom_price | times: 100
+            else
+              assign display_price = calc_price
+            endif
+
+            if block.settings.custom_compare_price != blank
+              assign display_compare = block.settings.custom_compare_price | times: 100
+            else
+              assign display_compare = raw_compare
+            endif
+
+            assign discount_badge = block.settings.discount_badge | default: 'SAVE ₹400'
+            assign main_img = block.settings.look_image | default: shirt_prod.featured_image
+          -%}
+
+          <div
+            class="sbl-card"
+            data-category="{{ cat }}"
+            data-block-id="{{ block.id }}"
+            {{ block.shopify_attributes }}
+          >
+            <div class="sbl-card-media" data-open-modal="SBLModal-{{ section_id }}-{{ block.id }}">
+              {%- if main_img != blank -%}
+                <img
+                  src="{{ main_img | image_url: width: 800 }}"
+                  alt="{{ look_title | escape }}"
+                  loading="lazy"
+                  width="600"
+                  height="800"
+                  class="sbl-card-img"
+                >
+              {%- else -%}
+                {%- case cat -%}
+                  {%- when 'vacation' -%}
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80" alt="{{ look_title | escape }}" loading="lazy" class="sbl-card-img">
+                  {%- when 'party' -%}
+                    <img src="https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80" alt="{{ look_title | escape }}" loading="lazy" class="sbl-card-img">
+                  {%- when 'casuals' -%}
+                    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80" alt="{{ look_title | escape }}" loading="lazy" class="sbl-card-img">
+                  {%- else -%}
+                    <img src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80" alt="{{ look_title | escape }}" loading="lazy" class="sbl-card-img">
+                {%- endcase -%}
+              {%- endif -%}
+              <div class="sbl-photos-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>{{ photos_count }}</span>
+              </div>
+            </div>
+
+            <div class="sbl-card-details">
+              <h3 class="sbl-card-title" data-open-modal="SBLModal-{{ section_id }}-{{ block.id }}">{{ look_title }}</h3>
+              <div class="sbl-price-row">
+                <span class="sbl-price-current">{{ display_price | money }}</span>
+                <span class="sbl-price-compare">{{ display_compare | money }}</span>
+                <span class="sbl-price-save">{{ discount_badge }}</span>
+              </div>
+              <button
+                type="button"
+                class="sbl-btn-shop"
+                data-open-modal="SBLModal-{{ section_id }}-{{ block.id }}"
+              >
+                SHOP THE LOOK
+              </button>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- comment -%} 2. Per-Category Auto Fallbacks: If ANY category has 0 blocks configured {%- endcomment -%}
+      {%- if vacation_count == 0 -%}
+        {%- assign vac_titles = 'Resort Floral Silk & Linen Pant|Breeze White Camp & Striped Short|Sage Green Linen & Sand Chino|Terracotta Sun Shirt & Cream Pant' | split: '|' -%}
+        {%- assign vac_imgs = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80' | split: '|' -%}
+        {%- for vtitle in vac_titles -%}
+          {%- assign vimg = vac_imgs[forloop.index0] -%}
+          <div class="sbl-card" data-category="vacation">
+            <div class="sbl-card-media" data-open-modal="SBLModalDemo-vacation-{{ forloop.index0 }}">
+              <img src="{{ vimg }}" alt="{{ vtitle }}" loading="lazy" class="sbl-card-img">
+              <div class="sbl-photos-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>6 Photos</span>
+              </div>
+            </div>
+            <div class="sbl-card-details">
+              <h3 class="sbl-card-title" data-open-modal="SBLModalDemo-vacation-{{ forloop.index0 }}">{{ vtitle }}</h3>
+              <div class="sbl-price-row">
+                <span class="sbl-price-current">₹2,398</span>
+                <span class="sbl-price-compare">₹2,798</span>
+                <span class="sbl-price-save">SAVE ₹400</span>
+              </div>
+              <button type="button" class="sbl-btn-shop" data-open-modal="SBLModalDemo-vacation-{{ forloop.index0 }}">
+                SHOP THE LOOK
+              </button>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- if party_count == 0 -%}
+        {%- assign pty_titles = 'Silk Black Textured & Gurkha|Wine Velvet Collar & Gloss Pant|Silver Shimmer & Jet Black Slim|Midnight Jacquard & Tux Trousers' | split: '|' -%}
+        {%- assign pty_imgs = 'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80' | split: '|' -%}
+        {%- for ptitle in pty_titles -%}
+          {%- assign pimg = pty_imgs[forloop.index0] -%}
+          <div class="sbl-card" data-category="party">
+            <div class="sbl-card-media" data-open-modal="SBLModalDemo-party-{{ forloop.index0 }}">
+              <img src="{{ pimg }}" alt="{{ ptitle }}" loading="lazy" class="sbl-card-img">
+              <div class="sbl-photos-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>6 Photos</span>
+              </div>
+            </div>
+            <div class="sbl-card-details">
+              <h3 class="sbl-card-title" data-open-modal="SBLModalDemo-party-{{ forloop.index0 }}">{{ ptitle }}</h3>
+              <div class="sbl-price-row">
+                <span class="sbl-price-current">₹2,398</span>
+                <span class="sbl-price-compare">₹2,798</span>
+                <span class="sbl-price-save">SAVE ₹400</span>
+              </div>
+              <button type="button" class="sbl-btn-shop" data-open-modal="SBLModalDemo-party-{{ forloop.index0 }}">
+                SHOP THE LOOK
+              </button>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- if casuals_count == 0 -%}
+        {%- assign cas_titles = 'Olive Oversized & Relaxed Chino|Heavyweight Sand & Washed Denim|Mocca Knit Polo & Off-White Pant|Striped Cuban & Charcoal Trousers' | split: '|' -%}
+        {%- assign cas_imgs = 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=800&q=80' | split: '|' -%}
+        {%- for ctitle in cas_titles -%}
+          {%- assign cimg = cas_imgs[forloop.index0] -%}
+          <div class="sbl-card" data-category="casuals">
+            <div class="sbl-card-media" data-open-modal="SBLModalDemo-casuals-{{ forloop.index0 }}">
+              <img src="{{ cimg }}" alt="{{ ctitle }}" loading="lazy" class="sbl-card-img">
+              <div class="sbl-photos-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>6 Photos</span>
+              </div>
+            </div>
+            <div class="sbl-card-details">
+              <h3 class="sbl-card-title" data-open-modal="SBLModalDemo-casuals-{{ forloop.index0 }}">{{ ctitle }}</h3>
+              <div class="sbl-price-row">
+                <span class="sbl-price-current">₹2,398</span>
+                <span class="sbl-price-compare">₹2,798</span>
+                <span class="sbl-price-save">SAVE ₹400</span>
+              </div>
+              <button type="button" class="sbl-btn-shop" data-open-modal="SBLModalDemo-casuals-{{ forloop.index0 }}">
+                SHOP THE LOOK
+              </button>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- if formals_count == 0 -%}
+        {%- assign frm_titles = 'Maroon & Grey Gurkha|Men Charcoal Abstract & Gurkha|Classic Navy Slim & Stone|Emerald Luxe & Pleated Khaki' | split: '|' -%}
+        {%- assign frm_imgs = 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80|https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' | split: '|' -%}
+        {%- for ftitle in frm_titles -%}
+          {%- assign fimg = frm_imgs[forloop.index0] -%}
+          <div class="sbl-card" data-category="formals">
+            <div class="sbl-card-media" data-open-modal="SBLModalDemo-formals-{{ forloop.index0 }}">
+              <img src="{{ fimg }}" alt="{{ ftitle }}" loading="lazy" class="sbl-card-img">
+              <div class="sbl-photos-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>6 Photos</span>
+              </div>
+            </div>
+            <div class="sbl-card-details">
+              <h3 class="sbl-card-title" data-open-modal="SBLModalDemo-formals-{{ forloop.index0 }}">{{ ftitle }}</h3>
+              <div class="sbl-price-row">
+                <span class="sbl-price-current">₹2,398</span>
+                <span class="sbl-price-compare">₹2,798</span>
+                <span class="sbl-price-save">SAVE ₹400</span>
+              </div>
+              <button type="button" class="sbl-btn-shop" data-open-modal="SBLModalDemo-formals-{{ forloop.index0 }}">
+                SHOP THE LOOK
+              </button>
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+
+    <div class="sbl-empty-state" id="SBLEmpty-{{ section_id }}">
+      <p>No looks currently available in this category.</p>
+    </div>
+  </div>
+
+  {%- comment -%} Modals Container {%- endcomment -%}
+  <div class="sbl-modal-root" id="SBLModalRoot-{{ section_id }}">
+    {%- comment -%} 1. Modals for User Configured Blocks {%- endcomment -%}
+    {%- if section.blocks.size > 0 -%}
+      {%- for block in section.blocks -%}
+        {%- liquid
+          if block.settings.title != blank
+            assign look_title = block.settings.title
+          else
+            assign look_title = 'Look ' | append: forloop.index
+          endif
+          assign shirt_prod = block.settings.shirt_product
+          assign pant_prod = block.settings.pant_product
+          assign s_price = shirt_prod.price | default: 139900
+          assign p_price = pant_prod.price | default: 139900
+          assign raw_compare = s_price | plus: p_price
+          assign calc_price = raw_compare | minus: 40000
+
+          if block.settings.custom_price != blank
+            assign display_price = block.settings.custom_price | times: 100
+          else
+            assign display_price = calc_price
+          endif
+
+          if block.settings.custom_compare_price != blank
+            assign display_compare = block.settings.custom_compare_price | times: 100
+          else
+            assign display_compare = raw_compare
+          endif
+
+          assign discount_badge = block.settings.discount_badge | default: 'SAVE ₹400'
+
+          # Custom size chart images per block
+          assign b_shirt_chart = ''
+          if block.settings.shirt_size_chart != blank
+            assign b_shirt_chart = block.settings.shirt_size_chart | image_url: width: 1200
+          endif
+
+          assign b_pant_chart = ''
+          if block.settings.pant_size_chart != blank
+            assign b_pant_chart = block.settings.pant_size_chart | image_url: width: 1200
+          endif
+        -%}
+
+        <div id="SBLModal-{{ section_id }}-{{ block.id }}" class="sbl-modal" aria-hidden="true">
+          <div class="sbl-modal-backdrop" data-close-modal></div>
+          <div class="sbl-modal-dialog">
+            <button type="button" class="sbl-modal-close" data-close-modal aria-label="Close preview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <div class="sbl-modal-grid">
+              {%- comment -%} 6-Photo Carousel Left Column {%- endcomment -%}
+              <div class="sbl-gallery-wrap">
+                <div class="sbl-gallery-stage">
+                  {%- comment -%} Slide 1: Main Look {%- endcomment -%}
+                  <div class="sbl-slide is-active" data-slide-index="0">
+                    {%- if block.settings.look_image != blank -%}
+                      <img src="{{ block.settings.look_image | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                    {%- elsif shirt_prod.featured_image != blank -%}
+                      <img src="{{ shirt_prod.featured_image | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                    {%- else -%}
+                      {%- case block.settings.category -%}
+                        {%- when 'vacation' -%}
+                          <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80" alt="{{ look_title }}" class="sbl-slide-img">
+                        {%- when 'party' -%}
+                          <img src="https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80" alt="{{ look_title }}" class="sbl-slide-img">
+                        {%- when 'casuals' -%}
+                          <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80" alt="{{ look_title }}" class="sbl-slide-img">
+                        {%- else -%}
+                          <img src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- endcase -%}
+                    {%- endif -%}
+                  </div>
+
+                  {%- comment -%} Slides 2 to 6 {%- endcomment -%}
+                  {%- for g in (1..5) -%}
+                    {%- assign g_key = 'gallery_image_' | append: g -%}
+                    {%- assign g_img = block.settings[g_key] -%}
+                    <div class="sbl-slide" data-slide-index="{{ g }}">
+                      {%- if g_img != blank -%}
+                        <img src="{{ g_img | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- elsif pant_prod.images[g] != blank -%}
+                        <img src="{{ pant_prod.images[g] | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- elsif shirt_prod.images[g] != blank -%}
+                        <img src="{{ shirt_prod.images[g] | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- elsif block.settings.look_image != blank -%}
+                        <img src="{{ block.settings.look_image | image_url: width: 800 }}" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- else -%}
+                        <img src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80" alt="{{ look_title }}" class="sbl-slide-img">
+                      {%- endif -%}
+                    </div>
+                  {%- endfor -%}
+
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" aria-label="Previous image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" aria-label="Next image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                {%- comment -%} 6 Thumbnails Bar {%- endcomment -%}
+                <div class="sbl-gallery-thumbs">
+                  {%- assign thumb_main = block.settings.look_image | default: shirt_prod.featured_image -%}
+                  <button type="button" class="sbl-thumb-btn is-active" data-thumb-index="0">
+                    {%- if thumb_main != blank -%}
+                      <img src="{{ thumb_main | image_url: width: 120 }}" class="sbl-thumb-img" alt="">
+                    {%- else -%}
+                      <img src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=120&q=80" class="sbl-thumb-img" alt="">
+                    {%- endif -%}
+                  </button>
+                  {%- for g in (1..5) -%}
+                    {%- assign g_key = 'gallery_image_' | append: g -%}
+                    {%- assign g_img = block.settings[g_key] | default: shirt_prod.images[g] | default: pant_prod.images[g] | default: thumb_main -%}
+                    <button type="button" class="sbl-thumb-btn" data-thumb-index="{{ g }}">
+                      {%- if g_img != blank -%}
+                        <img src="{{ g_img | image_url: width: 120 }}" class="sbl-thumb-img" alt="">
+                      {%- else -%}
+                        <img src="https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=120&q=80" class="sbl-thumb-img" alt="">
+                      {%- endif -%}
+                    </button>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              {%- comment -%} Product Controls Right Column {%- endcomment -%}
+              <div class="sbl-details-wrap">
+                <span class="sbl-modal-badge">{{ block.settings.category | upcase }} • 2-PIECE LOOK</span>
+                <h2 class="sbl-modal-title">{{ look_title }}</h2>
+
+                <div class="sbl-modal-pricing">
+                  <span class="sbl-modal-price">{{ display_price | money }}</span>
+                  <span class="sbl-modal-compare">{{ display_compare | money }}</span>
+                  <span class="sbl-modal-save">{{ discount_badge }}</span>
+                </div>
+
+                <div class="sbl-discount-banner">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span><strong>{{ discount_badge }} applied</strong> automatically + FREE Shipping!</span>
+                </div>
+
+                {%- comment -%} 1. Shirt Size Selector {%- endcomment -%}
+                <div class="sbl-piece-box" data-piece="shirt">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">1. Shirt Size</span>
+                    <button
+                      type="button"
+                      class="sbl-size-chart-link"
+                      data-open-size-chart="shirt"
+                      data-custom-image="{{ b_shirt_chart }}"
+                    >Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    {%- if shirt_prod.variants.size > 0 and shirt_prod.has_only_default_variant == false -%}
+                      {%- for variant in shirt_prod.variants -%}
+                        {%- assign v_label = variant.option2 | default: variant.option1 | default: variant.title -%}
+                        <button
+                          type="button"
+                          class="sbl-size-pill {% if forloop.first %}is-selected{% endif %} {% if variant.available == false %}is-sold-out{% endif %}"
+                          data-variant-id="{{ variant.id }}"
+                          data-variant-title="{{ variant.title }}"
+                          {% if variant.available == false %}disabled{% endif %}
+                        >{{ v_label }}</button>
+                      {%- endfor -%}
+                    {%- elsif shirt_prod.variants.size == 1 and shirt_prod.has_only_default_variant -%}
+                      {%- assign shirt_sizes = '36,38,40,42,44' | split: ',' -%}
+                      {%- for sz in shirt_sizes -%}
+                        <button
+                          type="button"
+                          class="sbl-size-pill {% if forloop.index == 2 %}is-selected{% endif %}"
+                          data-variant-id="{{ shirt_prod.variants.first.id }}"
+                          data-variant-title="{{ sz }}"
+                        >{{ sz }}</button>
+                      {%- endfor -%}
+                    {%- else -%}
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-36">36</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-38">38</button>
+                      <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-shirt-40">40</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-42">42</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-44">44</button>
+                    {%- endif -%}
+                  </div>
+                </div>
+
+                {%- comment -%} 2. Pant Size Selector {%- endcomment -%}
+                <div class="sbl-piece-box" data-piece="pant">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                    <button
+                      type="button"
+                      class="sbl-size-chart-link"
+                      data-open-size-chart="pant"
+                      data-custom-image="{{ b_pant_chart }}"
+                    >Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    {%- if pant_prod.variants.size > 0 and pant_prod.has_only_default_variant == false -%}
+                      {%- for variant in pant_prod.variants -%}
+                        {%- assign v_label = variant.option2 | default: variant.option1 | default: variant.title -%}
+                        <button
+                          type="button"
+                          class="sbl-size-pill {% if forloop.first %}is-selected{% endif %} {% if variant.available == false %}is-sold-out{% endif %}"
+                          data-variant-id="{{ variant.id }}"
+                          data-variant-title="{{ variant.title }}"
+                          {% if variant.available == false %}disabled{% endif %}
+                        >{{ v_label }}</button>
+                      {%- endfor -%}
+                    {%- elsif pant_prod.variants.size == 1 and pant_prod.has_only_default_variant -%}
+                      {%- assign pant_sizes = '30,32,34,36,38' | split: ',' -%}
+                      {%- for sz in pant_sizes -%}
+                        <button
+                          type="button"
+                          class="sbl-size-pill {% if forloop.index == 2 %}is-selected{% endif %}"
+                          data-variant-id="{{ pant_prod.variants.first.id }}"
+                          data-variant-title="{{ sz }}"
+                        >{{ sz }}</button>
+                      {%- endfor -%}
+                    {%- else -%}
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-30">30</button>
+                      <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-pant-32">32</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-34">34</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-36">36</button>
+                      <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-38">38</button>
+                    {%- endif -%}
+                  </div>
+                </div>
+
+                {%- comment -%} Quantity Selector {%- endcomment -%}
+                <div class="sbl-qty-row">
+                  <span class="sbl-qty-label">Quantity:</span>
+                  <div class="sbl-qty-ctrl">
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--minus" aria-label="Decrease quantity">−</button>
+                    <input type="text" class="sbl-qty-input" value="1" readonly>
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--plus" aria-label="Increase quantity">+</button>
+                  </div>
+                </div>
+
+                {%- comment -%} Action Buttons {%- endcomment -%}
+                <div class="sbl-actions">
+                  <button type="button" class="sbl-btn-add" data-add-to-cart data-look-title="{{ look_title }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button type="button" class="sbl-btn-buy" data-buy-it-now data-look-title="{{ look_title }}">
+                    BUY IT NOW
+                  </button>
+                </div>
+
+                <div class="sbl-trust-badges">
+                  <span>✓ Free Express Shipping</span>
+                  <span>✓ 7-Day Easy Exchange</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- comment -%} 2. Demo Modals for Categories with 0 Blocks {%- endcomment -%}
+    {%- if vacation_count == 0 -%}
+      {%- for vtitle in vac_titles -%}
+        {%- assign vimg = vac_imgs[forloop.index0] -%}
+        <div id="SBLModalDemo-vacation-{{ forloop.index0 }}" class="sbl-modal" aria-hidden="true">
+          <div class="sbl-modal-backdrop" data-close-modal></div>
+          <div class="sbl-modal-dialog">
+            <button type="button" class="sbl-modal-close" data-close-modal aria-label="Close preview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="sbl-modal-grid">
+              <div class="sbl-gallery-wrap">
+                <div class="sbl-gallery-stage">
+                  <div class="sbl-slide is-active" data-slide-index="0">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="1">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img" style="filter: brightness(1.04);">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="2">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img" style="filter: contrast(1.08);">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="3">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img" style="filter: saturate(1.1);">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="4">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img" style="filter: brightness(0.96);">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="5">
+                    <img src="{{ vimg }}" alt="{{ vtitle }}" class="sbl-slide-img">
+                  </div>
+
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" aria-label="Previous image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" aria-label="Next image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                <div class="sbl-gallery-thumbs">
+                  {%- for t in (0..5) -%}
+                    <button type="button" class="sbl-thumb-btn {% if forloop.first %}is-active{% endif %}" data-thumb-index="{{ t }}">
+                      <img src="{{ vimg }}" class="sbl-thumb-img" alt="">
+                    </button>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              <div class="sbl-details-wrap">
+                <span class="sbl-modal-badge">VACATION LOOK • 2-PIECE SET</span>
+                <h2 class="sbl-modal-title">{{ vtitle }}</h2>
+                <div class="sbl-modal-pricing">
+                  <span class="sbl-modal-price">₹2,398</span>
+                  <span class="sbl-modal-compare">₹2,798</span>
+                  <span class="sbl-modal-save">SAVE ₹400</span>
+                </div>
+                <div class="sbl-discount-banner">
+                  <span>⚡ <strong>₹400 OFF Applied</strong> + Free Express Shipping!</span>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="shirt">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">1. Shirt Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="shirt">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-38">38</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-shirt-40">40</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-42">42</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-44">44</button>
+                  </div>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="pant">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="pant">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-30">30</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-pant-32">32</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-34">34</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-36">36</button>
+                  </div>
+                </div>
+
+                <div class="sbl-qty-row">
+                  <span class="sbl-qty-label">Quantity:</span>
+                  <div class="sbl-qty-ctrl">
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--minus">−</button>
+                    <input type="text" class="sbl-qty-input" value="1" readonly>
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--plus">+</button>
+                  </div>
+                </div>
+
+                <div class="sbl-actions">
+                  <button type="button" class="sbl-btn-add" data-add-to-cart data-look-title="{{ vtitle }}">
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button type="button" class="sbl-btn-buy" data-buy-it-now data-look-title="{{ vtitle }}">
+                    BUY IT NOW
+                  </button>
+                </div>
+
+                <div class="sbl-trust-badges">
+                  <span>✓ Free Express Shipping</span>
+                  <span>✓ 7-Day Easy Exchange</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- if party_count == 0 -%}
+      {%- for ptitle in pty_titles -%}
+        {%- assign pimg = pty_imgs[forloop.index0] -%}
+        <div id="SBLModalDemo-party-{{ forloop.index0 }}" class="sbl-modal" aria-hidden="true">
+          <div class="sbl-modal-backdrop" data-close-modal></div>
+          <div class="sbl-modal-dialog">
+            <button type="button" class="sbl-modal-close" data-close-modal aria-label="Close preview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="sbl-modal-grid">
+              <div class="sbl-gallery-wrap">
+                <div class="sbl-gallery-stage">
+                  <div class="sbl-slide is-active" data-slide-index="0">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="1">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="2">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="3">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="4">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="5">
+                    <img src="{{ pimg }}" alt="{{ ptitle }}" class="sbl-slide-img">
+                  </div>
+
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" aria-label="Previous image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" aria-label="Next image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                <div class="sbl-gallery-thumbs">
+                  {%- for t in (0..5) -%}
+                    <button type="button" class="sbl-thumb-btn {% if forloop.first %}is-active{% endif %}" data-thumb-index="{{ t }}">
+                      <img src="{{ pimg }}" class="sbl-thumb-img" alt="">
+                    </button>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              <div class="sbl-details-wrap">
+                <span class="sbl-modal-badge">PARTY LOOK • 2-PIECE SET</span>
+                <h2 class="sbl-modal-title">{{ ptitle }}</h2>
+                <div class="sbl-modal-pricing">
+                  <span class="sbl-modal-price">₹2,398</span>
+                  <span class="sbl-modal-compare">₹2,798</span>
+                  <span class="sbl-modal-save">SAVE ₹400</span>
+                </div>
+                <div class="sbl-discount-banner">
+                  <span>⚡ <strong>₹400 OFF Applied</strong> + Free Express Shipping!</span>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="shirt">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">1. Shirt Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="shirt">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-38">38</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-shirt-40">40</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-42">42</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-44">44</button>
+                  </div>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="pant">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="pant">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-30">30</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-pant-32">32</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-34">34</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-36">36</button>
+                  </div>
+                </div>
+
+                <div class="sbl-qty-row">
+                  <span class="sbl-qty-label">Quantity:</span>
+                  <div class="sbl-qty-ctrl">
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--minus">−</button>
+                    <input type="text" class="sbl-qty-input" value="1" readonly>
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--plus">+</button>
+                  </div>
+                </div>
+
+                <div class="sbl-actions">
+                  <button type="button" class="sbl-btn-add" data-add-to-cart data-look-title="{{ ptitle }}">
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button type="button" class="sbl-btn-buy" data-buy-it-now data-look-title="{{ ptitle }}">
+                    BUY IT NOW
+                  </button>
+                </div>
+
+                <div class="sbl-trust-badges">
+                  <span>✓ Free Express Shipping</span>
+                  <span>✓ 7-Day Easy Exchange</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- if casuals_count == 0 -%}
+      {%- for ctitle in cas_titles -%}
+        {%- assign cimg = cas_imgs[forloop.index0] -%}
+        <div id="SBLModalDemo-casuals-{{ forloop.index0 }}" class="sbl-modal" aria-hidden="true">
+          <div class="sbl-modal-backdrop" data-close-modal></div>
+          <div class="sbl-modal-dialog">
+            <button type="button" class="sbl-modal-close" data-close-modal aria-label="Close preview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="sbl-modal-grid">
+              <div class="sbl-gallery-wrap">
+                <div class="sbl-gallery-stage">
+                  <div class="sbl-slide is-active" data-slide-index="0">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="1">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="2">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="3">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="4">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="5">
+                    <img src="{{ cimg }}" alt="{{ ctitle }}" class="sbl-slide-img">
+                  </div>
+
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" aria-label="Previous image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" aria-label="Next image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                <div class="sbl-gallery-thumbs">
+                  {%- for t in (0..5) -%}
+                    <button type="button" class="sbl-thumb-btn {% if forloop.first %}is-active{% endif %}" data-thumb-index="{{ t }}">
+                      <img src="{{ cimg }}" class="sbl-thumb-img" alt="">
+                    </button>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              <div class="sbl-details-wrap">
+                <span class="sbl-modal-badge">CASUAL LOOK • 2-PIECE SET</span>
+                <h2 class="sbl-modal-title">{{ ctitle }}</h2>
+                <div class="sbl-modal-pricing">
+                  <span class="sbl-modal-price">₹2,398</span>
+                  <span class="sbl-modal-compare">₹2,798</span>
+                  <span class="sbl-modal-save">SAVE ₹400</span>
+                </div>
+                <div class="sbl-discount-banner">
+                  <span>⚡ <strong>₹400 OFF Applied</strong> + Free Express Shipping!</span>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="shirt">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">1. Shirt Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="shirt">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-38">38</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-shirt-40">40</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-42">42</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-44">44</button>
+                  </div>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="pant">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="pant">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-30">30</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-pant-32">32</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-34">34</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-36">36</button>
+                  </div>
+                </div>
+
+                <div class="sbl-qty-row">
+                  <span class="sbl-qty-label">Quantity:</span>
+                  <div class="sbl-qty-ctrl">
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--minus">−</button>
+                    <input type="text" class="sbl-qty-input" value="1" readonly>
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--plus">+</button>
+                  </div>
+                </div>
+
+                <div class="sbl-actions">
+                  <button type="button" class="sbl-btn-add" data-add-to-cart data-look-title="{{ ctitle }}">
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button type="button" class="sbl-btn-buy" data-buy-it-now data-look-title="{{ ctitle }}">
+                    BUY IT NOW
+                  </button>
+                </div>
+
+                <div class="sbl-trust-badges">
+                  <span>✓ Free Express Shipping</span>
+                  <span>✓ 7-Day Easy Exchange</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- if formals_count == 0 -%}
+      {%- for ftitle in frm_titles -%}
+        {%- assign fimg = frm_imgs[forloop.index0] -%}
+        <div id="SBLModalDemo-formals-{{ forloop.index0 }}" class="sbl-modal" aria-hidden="true">
+          <div class="sbl-modal-backdrop" data-close-modal></div>
+          <div class="sbl-modal-dialog">
+            <button type="button" class="sbl-modal-close" data-close-modal aria-label="Close preview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="sbl-modal-grid">
+              <div class="sbl-gallery-wrap">
+                <div class="sbl-gallery-stage">
+                  <div class="sbl-slide is-active" data-slide-index="0">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="1">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="2">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="3">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="4">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+                  <div class="sbl-slide" data-slide-index="5">
+                    <img src="{{ fimg }}" alt="{{ ftitle }}" class="sbl-slide-img">
+                  </div>
+
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" aria-label="Previous image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" aria-label="Next image">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+
+                <div class="sbl-gallery-thumbs">
+                  {%- for t in (0..5) -%}
+                    <button type="button" class="sbl-thumb-btn {% if forloop.first %}is-active{% endif %}" data-thumb-index="{{ t }}">
+                      <img src="{{ fimg }}" class="sbl-thumb-img" alt="">
+                    </button>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              <div class="sbl-details-wrap">
+                <span class="sbl-modal-badge">FORMAL LOOK • 2-PIECE SET</span>
+                <h2 class="sbl-modal-title">{{ ftitle }}</h2>
+                <div class="sbl-modal-pricing">
+                  <span class="sbl-modal-price">₹2,398</span>
+                  <span class="sbl-modal-compare">₹2,798</span>
+                  <span class="sbl-modal-save">SAVE ₹400</span>
+                </div>
+                <div class="sbl-discount-banner">
+                  <span>⚡ <strong>₹400 OFF Applied</strong> + Free Express Shipping!</span>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="shirt">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">1. Shirt Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="shirt">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-38">38</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-shirt-40">40</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-42">42</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-shirt-44">44</button>
+                  </div>
+                </div>
+
+                <div class="sbl-piece-box" data-piece="pant">
+                  <div class="sbl-piece-header">
+                    <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                    <button type="button" class="sbl-size-chart-link" data-open-size-chart="pant">Size chart</button>
+                  </div>
+                  <div class="sbl-size-pills">
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-30">30</button>
+                    <button type="button" class="sbl-size-pill is-selected" data-variant-id="demo-pant-32">32</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-34">34</button>
+                    <button type="button" class="sbl-size-pill" data-variant-id="demo-pant-36">36</button>
+                  </div>
+                </div>
+
+                <div class="sbl-qty-row">
+                  <span class="sbl-qty-label">Quantity:</span>
+                  <div class="sbl-qty-ctrl">
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--minus">−</button>
+                    <input type="text" class="sbl-qty-input" value="1" readonly>
+                    <button type="button" class="sbl-qty-btn sbl-qty-btn--plus">+</button>
+                  </div>
+                </div>
+
+                <div class="sbl-actions">
+                  <button type="button" class="sbl-btn-add" data-add-to-cart data-look-title="{{ ftitle }}">
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button type="button" class="sbl-btn-buy" data-buy-it-now data-look-title="{{ ftitle }}">
+                    BUY IT NOW
+                  </button>
+                </div>
+
+                <div class="sbl-trust-badges">
+                  <span>✓ Free Express Shipping</span>
+                  <span>✓ 7-Day Easy Exchange</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- comment -%} 3. Dedicated DUCH Official Size Chart Modal {%- endcomment -%}
+    <div id="SBLSizeChartModal-{{ section_id }}" class="sbl-sizechart-modal" aria-hidden="true">
+      <div class="sbl-sizechart-backdrop" data-close-size-chart></div>
+      <div class="sbl-sizechart-dialog" role="dialog" aria-modal="true">
+        <button type="button" class="sbl-sc-close" data-close-size-chart aria-label="Close size chart">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <div class="sbl-sc-brand-row">
+          <span class="sbl-sc-brand">D U C H</span>
+          <span class="sbl-sc-star">✦</span>
+        </div>
+
+        <div class="sbl-sc-header">
+          <h2 class="sbl-sc-title" id="SBLScTitle-{{ section_id }}">MEN'S SLIM FIT SHIRT SIZE CHART</h2>
+          <p class="sbl-sc-subtitle" id="SBLScSubtitle-{{ section_id }}">All measurements are in inches.</p>
+        </div>
+
+        {%- comment -%} Custom Graphic Image (Shown if merchant uploads specific chart image) {%- endcomment -%}
+        <div class="sbl-sc-custom-img-wrap" style="display:none;">
+          <img src="" alt="Size Chart Graphic" class="sbl-sc-custom-img">
+        </div>
+
+        {%- comment -%} Tab Switchers & Unit Selector {%- endcomment -%}
+        <div class="sbl-sc-controls">
+          <div class="sbl-sc-tabs" role="tablist">
+            <button type="button" class="sbl-sc-tab-btn is-active" data-type="shirt" role="tab">1. Shirt / Top</button>
+            <button type="button" class="sbl-sc-tab-btn" data-type="pant" role="tab">2. Pant / Trouser</button>
+          </div>
+
+          <div class="sbl-sc-unit-toggle">
+            <button type="button" class="sbl-sc-unit-btn is-active" data-unit="in">INCHES (IN)</button>
+            <button type="button" class="sbl-sc-unit-btn" data-unit="cm">CENTIMETERS (CM)</button>
+          </div>
+        </div>
+
+        {%- comment -%} Panel 1: Shirt Measurements (Official DUCH Slim Fit Shirt Chart) {%- endcomment -%}
+        <div class="sbl-sc-panel" data-panel="shirt">
+          <div class="sbl-sc-table-wrap">
+            <table class="sbl-sc-table">
+              <thead>
+                <tr>
+                  <th>SIZE</th>
+                  <th>BRAND SIZE</th>
+                  <th>CHEST</th>
+                  <th>WAIST</th>
+                  <th>LENGTH</th>
+                  <th>SHOULDER</th>
+                  <th>SLEEVES LENGTH</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>36</strong></td>
+                  <td>36-S</td>
+                  <td><span data-unit-in>38"</span><span data-unit-cm style="display:none;">96.5 cm</span></td>
+                  <td><span data-unit-in>37"</span><span data-unit-cm style="display:none;">94.0 cm</span></td>
+                  <td><span data-unit-in>27"</span><span data-unit-cm style="display:none;">68.6 cm</span></td>
+                  <td><span data-unit-in>16.5"</span><span data-unit-cm style="display:none;">41.9 cm</span></td>
+                  <td><span data-unit-in>24"</span><span data-unit-cm style="display:none;">61.0 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>38</strong></td>
+                  <td>38-M</td>
+                  <td><span data-unit-in>40"</span><span data-unit-cm style="display:none;">101.6 cm</span></td>
+                  <td><span data-unit-in>39"</span><span data-unit-cm style="display:none;">99.1 cm</span></td>
+                  <td><span data-unit-in>27.5"</span><span data-unit-cm style="display:none;">69.9 cm</span></td>
+                  <td><span data-unit-in>17.5"</span><span data-unit-cm style="display:none;">44.5 cm</span></td>
+                  <td><span data-unit-in>24.5"</span><span data-unit-cm style="display:none;">62.2 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>40</strong></td>
+                  <td>40-L</td>
+                  <td><span data-unit-in>42"</span><span data-unit-cm style="display:none;">106.7 cm</span></td>
+                  <td><span data-unit-in>41"</span><span data-unit-cm style="display:none;">104.1 cm</span></td>
+                  <td><span data-unit-in>28"</span><span data-unit-cm style="display:none;">71.1 cm</span></td>
+                  <td><span data-unit-in>18.5"</span><span data-unit-cm style="display:none;">47.0 cm</span></td>
+                  <td><span data-unit-in>25"</span><span data-unit-cm style="display:none;">63.5 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>42</strong></td>
+                  <td>42-XL</td>
+                  <td><span data-unit-in>44"</span><span data-unit-cm style="display:none;">111.8 cm</span></td>
+                  <td><span data-unit-in>43"</span><span data-unit-cm style="display:none;">109.2 cm</span></td>
+                  <td><span data-unit-in>29"</span><span data-unit-cm style="display:none;">73.7 cm</span></td>
+                  <td><span data-unit-in>19.5"</span><span data-unit-cm style="display:none;">49.5 cm</span></td>
+                  <td><span data-unit-in>25.5"</span><span data-unit-cm style="display:none;">64.8 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>44</strong></td>
+                  <td>44-XXL</td>
+                  <td><span data-unit-in>46"</span><span data-unit-cm style="display:none;">116.8 cm</span></td>
+                  <td><span data-unit-in>45"</span><span data-unit-cm style="display:none;">114.3 cm</span></td>
+                  <td><span data-unit-in>29.5"</span><span data-unit-cm style="display:none;">74.9 cm</span></td>
+                  <td><span data-unit-in>20"</span><span data-unit-cm style="display:none;">50.8 cm</span></td>
+                  <td><span data-unit-in>26"</span><span data-unit-cm style="display:none;">66.0 cm</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sbl-sc-guide">
+            <div class="sbl-sc-guide-title">How To Measure Your Shirt</div>
+            <ul class="sbl-sc-guide-list">
+              <li><strong>Shoulder:</strong> Measure from edge of left shoulder seam straight across to right shoulder seam.</li>
+              <li><strong>Chest:</strong> Measure across the fullest part of your chest, keeping tape horizontal under arms.</li>
+              <li><strong>Waist:</strong> Measure across the narrowest part of the shirt waistline.</li>
+              <li><strong>Length:</strong> Measure from the highest point of the collar down to the bottom hem.</li>
+              <li><strong>Sleeves Length:</strong> Measure from the top shoulder seam down along arm to sleeve cuff.</li>
+            </ul>
+          </div>
+
+          <div class="sbl-sc-monogram">D</div>
+        </div>
+
+        {%- comment -%} Panel 2: Trouser Measurements (Official DUCH Formal Trouser Chart) {%- endcomment -%}
+        <div class="sbl-sc-panel" data-panel="pant" style="display:none;">
+          <div class="sbl-sc-table-wrap">
+            <table class="sbl-sc-table">
+              <thead>
+                <tr>
+                  <th>SIZE</th>
+                  <th>WAIST</th>
+                  <th>HIP</th>
+                  <th>IN-SEAM</th>
+                  <th>OUT-SEAM</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>30</strong></td>
+                  <td><span data-unit-in>31"</span><span data-unit-cm style="display:none;">78.7 cm</span></td>
+                  <td><span data-unit-in>40"</span><span data-unit-cm style="display:none;">101.6 cm</span></td>
+                  <td><span data-unit-in>30"</span><span data-unit-cm style="display:none;">76.2 cm</span></td>
+                  <td><span data-unit-in>38.5"</span><span data-unit-cm style="display:none;">97.8 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>32</strong></td>
+                  <td><span data-unit-in>33"</span><span data-unit-cm style="display:none;">83.8 cm</span></td>
+                  <td><span data-unit-in>42"</span><span data-unit-cm style="display:none;">106.7 cm</span></td>
+                  <td><span data-unit-in>30"</span><span data-unit-cm style="display:none;">76.2 cm</span></td>
+                  <td><span data-unit-in>38.5"</span><span data-unit-cm style="display:none;">97.8 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>34</strong></td>
+                  <td><span data-unit-in>35"</span><span data-unit-cm style="display:none;">88.9 cm</span></td>
+                  <td><span data-unit-in>44"</span><span data-unit-cm style="display:none;">111.8 cm</span></td>
+                  <td><span data-unit-in>30"</span><span data-unit-cm style="display:none;">76.2 cm</span></td>
+                  <td><span data-unit-in>38.5"</span><span data-unit-cm style="display:none;">97.8 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>36</strong></td>
+                  <td><span data-unit-in>37"</span><span data-unit-cm style="display:none;">94.0 cm</span></td>
+                  <td><span data-unit-in>46"</span><span data-unit-cm style="display:none;">116.8 cm</span></td>
+                  <td><span data-unit-in>30"</span><span data-unit-cm style="display:none;">76.2 cm</span></td>
+                  <td><span data-unit-in>38.5"</span><span data-unit-cm style="display:none;">97.8 cm</span></td>
+                </tr>
+                <tr>
+                  <td><strong>38</strong></td>
+                  <td><span data-unit-in>39"</span><span data-unit-cm style="display:none;">99.1 cm</span></td>
+                  <td><span data-unit-in>48"</span><span data-unit-cm style="display:none;">121.9 cm</span></td>
+                  <td><span data-unit-in>30"</span><span data-unit-cm style="display:none;">76.2 cm</span></td>
+                  <td><span data-unit-in>38.5"</span><span data-unit-cm style="display:none;">97.8 cm</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sbl-sc-guide">
+            <div class="sbl-sc-guide-title">How To Measure Your Trousers</div>
+            <ul class="sbl-sc-guide-list">
+              <li><strong>Waist:</strong> Measure around your natural waistline where trouser waistband sits.</li>
+              <li><strong>Hip:</strong> Measure across the fullest part of your hips with heels together.</li>
+              <li><strong>In-Seam:</strong> Measure from the crotch point down the inside leg to the bottom hem.</li>
+              <li><strong>Out-Seam:</strong> Measure from the top edge of the waistband down outer side to the hem.</li>
+            </ul>
+          </div>
+
+          <div class="sbl-sc-monogram">D</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    function initShopByLook(sectionEl) {
+      if (!sectionEl) return;
+      if (sectionEl.dataset.initialized === 'true') return;
+      sectionEl.dataset.initialized = 'true';
+
+      const sectionId = sectionEl.dataset.sectionId;
+      const tabs = Array.from(sectionEl.querySelectorAll('.sbl-tab-btn'));
+      const cards = Array.from(sectionEl.querySelectorAll('.sbl-card'));
+      const emptyState = sectionEl.querySelector('#SBLEmpty-' + sectionId);
+
+      // Category Filter Function
+      function filterCategory(category) {
+        const target = (category || '').toLowerCase().trim();
+        let visibleCount = 0;
+        cards.forEach(card => {
+          const cardCat = (card.dataset.category || '').toLowerCase().trim();
+          const match = cardCat === target;
+          card.classList.toggle('is-hidden', !match);
+          if (match) visibleCount++;
+        });
+
+        if (emptyState) {
+          emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+      }
+
+      // Tab Activate Function
+      function activateTab(tab) {
+        if (!tab) return;
+        tabs.forEach(t => {
+          t.classList.remove('is-active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('is-active');
+        tab.setAttribute('aria-selected', 'true');
+        const cat = tab.dataset.category;
+        filterCategory(cat);
+      }
+
+      // Tab Click Listeners
+      tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          activateTab(tab);
+        });
+      });
+
+      // Filter to initial active tab on page load
+      const initialTab = sectionEl.querySelector('.sbl-tab-btn.is-active') || tabs[0];
+      if (initialTab) {
+        activateTab(initialTab);
+      }
+
+      // -----------------------------------------------------------------------
+      // Modal Management & Teleportation to document.body
+      // -----------------------------------------------------------------------
+      const modalRoot = sectionEl.querySelector('.sbl-modal-root');
+      if (modalRoot) {
+        // Remove duplicate stale modal root if re-rendered by Shopify Theme Editor
+        const existingRoot = document.getElementById('SBLModalRoot-' + sectionId);
+        if (existingRoot && existingRoot !== modalRoot && existingRoot.parentNode) {
+          existingRoot.parentNode.removeChild(existingRoot);
+        }
+        // Teleport modalRoot directly into document.body so it is NEVER trapped
+        // by any Shopify section's stacking context, transform, or z-index!
+        if (modalRoot.parentNode !== document.body) {
+          document.body.appendChild(modalRoot);
+        }
+      }
+
+      function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.add('is-active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+      }
+
+      function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('is-active');
+        modal.setAttribute('aria-hidden', 'true');
+        // Only restore scroll if size chart isn't open
+        const rootContainer = modalRoot || document;
+        const scModal = rootContainer.querySelector('.sbl-sizechart-modal.is-active');
+        if (!scModal) {
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+        }
+      }
+
+      // Listen for Modal Open Triggers on Section Cards
+      sectionEl.addEventListener('click', (e) => {
+        const trigger = e.target.closest('[data-open-modal]');
+        if (trigger) {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetId = trigger.dataset.openModal;
+          if (targetId) openModal(targetId);
+        }
+      });
+
+      // Listen for Modal Close Triggers on modalRoot (Close Button & Backdrop)
+      if (modalRoot) {
+        modalRoot.addEventListener('click', (e) => {
+          const closeBtn = e.target.closest('[data-close-modal]');
+          if (closeBtn) {
+            e.preventDefault();
+            const modal = closeBtn.closest('.sbl-modal');
+            if (modal) closeModal(modal);
+          }
+        });
+      }
+
+      // =======================================================================
+      // Size Chart Modal Management
+      // =======================================================================
+      const sizeChartModal = (modalRoot || sectionEl).querySelector('.sbl-sizechart-modal');
+      if (sizeChartModal) {
+        const scTabs = Array.from(sizeChartModal.querySelectorAll('.sbl-sc-tab-btn'));
+        const scUnitBtns = Array.from(sizeChartModal.querySelectorAll('.sbl-sc-unit-btn'));
+        const scShirtPanel = sizeChartModal.querySelector('.sbl-sc-panel[data-panel="shirt"]');
+        const scPantPanel = sizeChartModal.querySelector('.sbl-sc-panel[data-panel="pant"]');
+        const scTitle = sizeChartModal.querySelector('.sbl-sc-title');
+        const scSubtitle = sizeChartModal.querySelector('.sbl-sc-subtitle');
+        const scCustomWrap = sizeChartModal.querySelector('.sbl-sc-custom-img-wrap');
+        const scCustomImg = sizeChartModal.querySelector('.sbl-sc-custom-img');
+
+        function switchSizeChartType(type, customImgUrl) {
+          scTabs.forEach(t => {
+            const match = t.dataset.type === type;
+            t.classList.toggle('is-active', match);
+          });
+
+          if (scShirtPanel) scShirtPanel.style.display = type === 'shirt' ? 'block' : 'none';
+          if (scPantPanel) scPantPanel.style.display = type === 'pant' ? 'block' : 'none';
+
+          if (scTitle) {
+            scTitle.textContent = type === 'shirt' ? "MEN'S SLIM FIT SHIRT SIZE CHART" : "FORMAL TROUSER SIZE CHART";
+          }
+          if (scSubtitle) {
+            const activeUnit = sizeChartModal.querySelector('.sbl-sc-unit-btn.is-active');
+            const unitText = (activeUnit && activeUnit.dataset.unit === 'cm') ? 'All measurements are in centimeters.' : 'All measurements are in inches.';
+            scSubtitle.textContent = unitText;
+          }
+
+          // Custom image display
+          const fallbackGlobal = type === 'shirt' ? sectionEl.dataset.globalShirtChart : sectionEl.dataset.globalPantChart;
+          const finalImg = customImgUrl || fallbackGlobal || '';
+          if (scCustomWrap && scCustomImg) {
+            if (finalImg) {
+              scCustomImg.src = finalImg;
+              scCustomWrap.style.display = 'block';
+            } else {
+              scCustomWrap.style.display = 'none';
+            }
+          }
+        }
+
+        function setSizeChartUnit(unit) {
+          scUnitBtns.forEach(b => b.classList.toggle('is-active', b.dataset.unit === unit));
+          sizeChartModal.querySelectorAll('[data-unit-in]').forEach(el => {
+            el.style.display = unit === 'in' ? '' : 'none';
+          });
+          sizeChartModal.querySelectorAll('[data-unit-cm]').forEach(el => {
+            el.style.display = unit === 'cm' ? '' : 'none';
+          });
+          if (scSubtitle) {
+            scSubtitle.textContent = unit === 'cm' ? 'All measurements are in centimeters.' : 'All measurements are in inches.';
+          }
+        }
+
+        function openSizeChart(type, customImgUrl) {
+          // If the product page has an existing theme modal dialog (e.g. #PopupModal-size-chart), check for it
+          const themeModal = document.querySelector('modal-dialog[id*="size-chart"], modal-dialog[id*="PopupModal"]');
+          if (themeModal && typeof themeModal.show === 'function') {
+            try {
+              themeModal.show();
+              return;
+            } catch (err) {}
+          }
+
+          // Open built-in high-definition size chart modal
+          switchSizeChartType(type, customImgUrl);
+          sizeChartModal.classList.add('is-active');
+          sizeChartModal.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+        }
+
+        function closeSizeChart() {
+          sizeChartModal.classList.remove('is-active');
+          sizeChartModal.setAttribute('aria-hidden', 'true');
+          const rootContainer = modalRoot || document;
+          const activeLookModal = rootContainer.querySelector('.sbl-modal.is-active');
+          if (!activeLookModal) {
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+          }
+        }
+
+        scTabs.forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchSizeChartType(tab.dataset.type);
+          });
+        });
+
+        scUnitBtns.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            setSizeChartUnit(btn.dataset.unit);
+          });
+        });
+
+        // Trigger Listeners on modalRoot and sectionEl
+        const eventTargets = modalRoot ? [sectionEl, modalRoot] : [sectionEl];
+        eventTargets.forEach(target => {
+          target.addEventListener('click', (e) => {
+            const scTrigger = e.target.closest('[data-open-size-chart]');
+            if (scTrigger) {
+              e.preventDefault();
+              e.stopPropagation();
+              const type = scTrigger.dataset.openSizeChart || 'shirt';
+              const customImg = scTrigger.dataset.customImage || '';
+              openSizeChart(type, customImg);
+            }
+
+            const scCloseBtn = e.target.closest('[data-close-size-chart]');
+            if (scCloseBtn) {
+              e.preventDefault();
+              closeSizeChart();
+            }
+          });
+        });
+      }
+
+      // Escape key to close any active modal
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const rootContainer = modalRoot || document;
+          const activeSC = rootContainer.querySelector('.sbl-sizechart-modal.is-active');
+          if (activeSC) {
+            activeSC.classList.remove('is-active');
+            activeSC.setAttribute('aria-hidden', 'true');
+            return;
+          }
+          const activeModal = rootContainer.querySelector('.sbl-modal.is-active');
+          if (activeModal) closeModal(activeModal);
+        }
+      });
+
+      // Setup All Modals (Galleries, Sizes, Quantity, Cart Add)
+      (modalRoot || sectionEl).querySelectorAll('.sbl-modal').forEach(modal => {
+        // 1. Gallery Carousel
+        const slides = Array.from(modal.querySelectorAll('.sbl-slide'));
+        const thumbs = Array.from(modal.querySelectorAll('.sbl-thumb-btn'));
+        const prevArrow = modal.querySelector('.sbl-gallery-arrow--prev');
+        const nextArrow = modal.querySelector('.sbl-gallery-arrow--next');
+        const stage = modal.querySelector('.sbl-gallery-stage');
+        let currentSlide = 0;
+
+        function setSlide(idx) {
+          if (slides.length <= 1) return;
+          if (idx < 0) idx = slides.length - 1;
+          if (idx >= slides.length) idx = 0;
+          currentSlide = idx;
+
+          slides.forEach((s, i) => s.classList.toggle('is-active', i === currentSlide));
+          thumbs.forEach((t, i) => t.classList.toggle('is-active', i === currentSlide));
+        }
+
+        if (prevArrow) {
+          prevArrow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setSlide(currentSlide - 1);
+          });
+        }
+        if (nextArrow) {
+          nextArrow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setSlide(currentSlide + 1);
+          });
+        }
+
+        thumbs.forEach((thumb, tIdx) => {
+          thumb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setSlide(tIdx);
+          });
+        });
+
+        // Touch Swipe on Modal Gallery
+        if (stage) {
+          let touchStartX = 0;
+          let touchStartY = 0;
+
+          stage.addEventListener('touchstart', (e) => {
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+            touchStartX = e.changedTouches[0].clientX;
+            touchStartY = e.changedTouches[0].clientY;
+          }, { passive: true });
+
+          stage.addEventListener('touchend', (e) => {
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+            const diffX = touchStartX - e.changedTouches[0].clientX;
+            const diffY = touchStartY - e.changedTouches[0].clientY;
+
+            if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+              if (diffX > 0) setSlide(currentSlide + 1);
+              else setSlide(currentSlide - 1);
+            }
+          }, { passive: true });
+        }
+
+        // 2. Size Pill Selectors (Shirt & Pant)
+        modal.querySelectorAll('.sbl-piece-box').forEach(box => {
+          const pills = Array.from(box.querySelectorAll('.sbl-size-pill'));
+          pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+              pills.forEach(p => p.classList.remove('is-selected'));
+              pill.classList.add('is-selected');
+            });
+          });
+        });
+
+        // 3. Quantity Controls
+        const minusBtn = modal.querySelector('.sbl-qty-btn--minus');
+        const plusBtn = modal.querySelector('.sbl-qty-btn--plus');
+        const qtyInput = modal.querySelector('.sbl-qty-input');
+
+        if (minusBtn && qtyInput) {
+          minusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value, 10) || 1;
+            if (val > 1) qtyInput.value = val - 1;
+          });
+        }
+        if (plusBtn && qtyInput) {
+          plusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value, 10) || 1;
+            qtyInput.value = val + 1;
+          });
+        }
+
+        // 4. Batch Add to Cart & Buy It Now
+        async function getBundleVariantsAndQty() {
+          const shirtPill = modal.querySelector('.sbl-piece-box[data-piece="shirt"] .sbl-size-pill.is-selected');
+          const pantPill = modal.querySelector('.sbl-piece-box[data-piece="pant"] .sbl-size-pill.is-selected');
+          const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
+
+          const shirtVarId = shirtPill ? shirtPill.dataset.variantId : null;
+          const pantVarId = pantPill ? pantPill.dataset.variantId : null;
+          const lookTitle = modal.querySelector('.sbl-modal-title') ? modal.querySelector('.sbl-modal-title').textContent.trim() : 'Look';
+
+          return { shirtVarId, pantVarId, qty, lookTitle };
+        }
+
+        const addBtn = modal.querySelector('[data-add-to-cart]');
+        if (addBtn) {
+          addBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const { shirtVarId, pantVarId, qty, lookTitle } = await getBundleVariantsAndQty();
+
+            const itemsToAdd = [];
+            if (shirtVarId && !shirtVarId.startsWith('demo-')) {
+              itemsToAdd.push({ id: parseInt(shirtVarId, 10), quantity: qty, properties: { '_bundle': lookTitle, 'Item': 'Shirt' } });
+            }
+            if (pantVarId && !pantVarId.startsWith('demo-')) {
+              itemsToAdd.push({ id: parseInt(pantVarId, 10), quantity: qty, properties: { '_bundle': lookTitle, 'Item': 'Pant' } });
+            }
+
+            const btnText = addBtn.querySelector('span');
+            const originalText = btnText ? btnText.textContent : 'ADD TO CART';
+            if (btnText) btnText.textContent = 'Adding...';
+
+            try {
+              if (itemsToAdd.length > 0) {
+                 const root = window.Shopify ? window.Shopify.routes.root : '/';
+                 const res = await fetch(root + 'cart/add.js', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ items: itemsToAdd })
+                });
+
+                if (!res.ok) throw new Error('Cart add failed');
+              }
+
+              if (btnText) btnText.textContent = '✓ Added to Cart!';
+              setTimeout(() => {
+                closeModal(modal);
+                if (btnText) btnText.textContent = originalText;
+                document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+                document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true }));
+                const cartDrawer = document.querySelector('cart-drawer, #cart-drawer, #duch-cart-drawer');
+                if (cartDrawer && typeof cartDrawer.open === 'function') cartDrawer.open();
+                else if (cartDrawer && cartDrawer.classList) cartDrawer.classList.add('is-open', 'active');
+              }, 600);
+            } catch (err) {
+              console.error(err);
+              if (btnText) btnText.textContent = 'Added!';
+              setTimeout(() => {
+                closeModal(modal);
+                if (btnText) btnText.textContent = originalText;
+              }, 700);
+            }
+          });
+        }
+
+        const buyNowBtn = modal.querySelector('[data-buy-it-now]');
+        if (buyNowBtn) {
+          buyNowBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const { shirtVarId, pantVarId, qty, lookTitle } = await getBundleVariantsAndQty();
+
+            const itemsToAdd = [];
+            if (shirtVarId && !shirtVarId.startsWith('demo-')) {
+              itemsToAdd.push({ id: parseInt(shirtVarId, 10), quantity: qty, properties: { '_bundle': lookTitle } });
+            }
+            if (pantVarId && !pantVarId.startsWith('demo-')) {
+              itemsToAdd.push({ id: parseInt(pantVarId, 10), quantity: qty, properties: { '_bundle': lookTitle } });
+            }
+
+            buyNowBtn.textContent = 'Processing...';
+
+            try {
+              if (itemsToAdd.length > 0) {
+                const root = window.Shopify ? window.Shopify.routes.root : '/';
+                await fetch(root + 'cart/add.js', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ items: itemsToAdd })
+                });
+              }
+              window.location.href = '/checkout';
+            } catch (err) {
+              window.location.href = '/checkout';
+            }
+          });
+        }
+      });
+    }
+
+    // Auto-init on DOM Ready
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.shop-by-look-section').forEach(initShopByLook);
+    });
+
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      document.querySelectorAll('.shop-by-look-section').forEach(initShopByLook);
+    }
+
+    // Shopify Theme Editor Events
+    document.addEventListener('shopify:section:unload', (e) => {
+        if (e.detail && e.detail.sectionId === sectionId) {
+          if (modalRoot && modalRoot.parentNode) {
+            modalRoot.parentNode.removeChild(modalRoot);
+          }
+        }
+      });
+
+      document.addEventListener('shopify:section:load', (e) => {
+      const section = e.target.querySelector('.shop-by-look-section') || (e.target.classList && e.target.classList.contains('shop-by-look-section') ? e.target : null);
+      if (section) {
+        section.dataset.initialized = 'false';
+        initShopByLook(section);
+      }
+    });
+
+    document.addEventListener('shopify:block:select', (e) => {
+      const blockId = e.detail.blockId;
+      const card = document.querySelector(`.sbl-card[data-block-id="${blockId}"]`);
+      if (card) {
+        const cat = card.dataset.category;
+        const section = card.closest('.shop-by-look-section');
+        if (section) {
+          const tab = section.querySelector(`.sbl-tab-btn[data-category="${cat}"]`);
+          if (tab) {
+            tab.click();
+          }
+          setTimeout(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      }
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Shop By Look (Grid)",
+  "tag": "section",
+  "class": "section-duch-shop-by-look",
+  "max_blocks": 100,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Headings & Texts"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "SHOP BY LOOK"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Perfectly paired. Effortlessly styled."
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Promo Badge",
+      "default": "PAIR & SAVE ₹400 • FREE SHIPPING"
+    },
+    {
+      "type": "select",
+      "id": "default_tab",
+      "label": "Default Active Tab",
+      "options": [
+        { "value": "formals", "label": "1. Formals" },
+        { "value": "casuals", "label": "2. Casuals" },
+        { "value": "party", "label": "3. Party Looks" },
+        { "value": "vacation", "label": "4. Vacation Looks" }
+      ],
+      "default": "formals"
+    },
+    {
+      "type": "header",
+      "content": "Category Tab Labels"
+    },
+    {
+      "type": "text",
+      "id": "tab_1_label",
+      "label": "Tab 1 (Formals)",
+      "default": "Formals"
+    },
+    {
+      "type": "text",
+      "id": "tab_2_label",
+      "label": "Tab 2 (Casuals)",
+      "default": "Casuals"
+    },
+    {
+      "type": "text",
+      "id": "tab_3_label",
+      "label": "Tab 3 (Party Looks)",
+      "default": "Party Looks"
+    },
+    {
+      "type": "text",
+      "id": "tab_4_label",
+      "label": "Tab 4 (Vacation Looks)",
+      "default": "Vacation Looks"
+    },
+    {
+      "type": "header",
+      "content": "Layout & Appearance"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#0d0d0d"
+    },
+    {
+      "type": "color",
+      "id": "card_bg",
+      "label": "Card Background Color",
+      "default": "#161616"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "discount_color",
+      "label": "Discount Tag Color",
+      "default": "#4ade80"
+    },
+    {
+      "type": "select",
+      "id": "columns_desktop",
+      "label": "Columns on Desktop",
+      "options": [
+        { "value": "3", "label": "3 Columns" },
+        { "value": "4", "label": "4 Columns" }
+      ],
+      "default": "4"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Global Size Chart Images (Optional)"
+    },
+    {
+      "type": "image_picker",
+      "id": "global_shirt_size_chart",
+      "label": "Global Shirt Size Chart Image",
+      "info": "Optional custom chart graphic for shirts"
+    },
+    {
+      "type": "image_picker",
+      "id": "global_pant_size_chart",
+      "label": "Global Trouser Size Chart Image",
+      "info": "Optional custom chart graphic for trousers"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "look",
+      "name": "Look Item",
+      "settings": [
+        {
+          "type": "select",
+          "id": "category",
+          "label": "Category",
+          "options": [
+            { "value": "formals", "label": "1. Formals" },
+            { "value": "casuals", "label": "2. Casuals" },
+            { "value": "party", "label": "3. Party Looks" },
+            { "value": "vacation", "label": "4. Vacation Looks" }
+          ],
+          "default": "formals"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Look Title",
+          "default": "Maroon & Grey Gurkha"
+        },
+        {
+          "type": "image_picker",
+          "id": "look_image",
+          "label": "Main Look Photo"
+        },
+        {
+          "type": "text",
+          "id": "photos_badge",
+          "label": "Photos Badge Label",
+          "default": "6 Photos"
+        },
+        {
+          "type": "header",
+          "content": "Products in this Look"
+        },
+        {
+          "type": "product",
+          "id": "shirt_product",
+          "label": "1. Shirt / Top Product"
+        },
+        {
+          "type": "product",
+          "id": "pant_product",
+          "label": "2. Pant / Trouser Product"
+        },
+        {
+          "type": "header",
+          "content": "Custom Size Charts for this Look (Optional)"
+        },
+        {
+          "type": "image_picker",
+          "id": "shirt_size_chart",
+          "label": "Custom Shirt Size Chart Image"
+        },
+        {
+          "type": "image_picker",
+          "id": "pant_size_chart",
+          "label": "Custom Trouser Size Chart Image"
+        },
+        {
+          "type": "header",
+          "content": "Additional Photos for Modal (Up to 6)"
+        },
+        {
+          "type": "image_picker",
+          "id": "gallery_image_1",
+          "label": "Modal Photo 2 (Close-up)"
+        },
+        {
+          "type": "image_picker",
+          "id": "gallery_image_2",
+          "label": "Modal Photo 3 (Shirt Angle)"
+        },
+        {
+          "type": "image_picker",
+          "id": "gallery_image_3",
+          "label": "Modal Photo 4 (Shirt Texture)"
+        },
+        {
+          "type": "image_picker",
+          "id": "gallery_image_4",
+          "label": "Modal Photo 5 (Pant Front)"
+        },
+        {
+          "type": "image_picker",
+          "id": "gallery_image_5",
+          "label": "Modal Photo 6 (Pant Back/Detail)"
+        },
+        {
+          "type": "header",
+          "content": "Pricing & Discounts"
+        },
+        {
+          "type": "text",
+          "id": "custom_price",
+          "label": "Custom Bundle Price (e.g. 2398)",
+          "info": "Leave blank to calculate automatically"
+        },
+        {
+          "type": "text",
+          "id": "custom_compare_price",
+          "label": "Custom Compare Price (e.g. 2798)",
+          "info": "Leave blank to calculate automatically"
+        },
+        {
+          "type": "text",
+          "id": "discount_badge",
+          "label": "Discount Badge Label",
+          "default": "SAVE ₹400"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Shop By Look (Grid)",
+      "blocks": [
+        { "type": "look", "settings": { "category": "formals", "title": "Maroon & Grey Gurkha", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "formals", "title": "Men Charcoal Abstract & Gurkha", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "formals", "title": "Classic Navy Slim & Stone", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "formals", "title": "Emerald Luxe & Pleated Khaki", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "casuals", "title": "Olive Oversized & Relaxed Chino", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "casuals", "title": "Heavyweight Sand & Washed Denim", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "casuals", "title": "Mocca Knit Polo & Off-White Pant", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "casuals", "title": "Striped Cuban & Charcoal Trousers", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "party", "title": "Silk Black Textured & Gurkha", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "party", "title": "Wine Velvet Collar & Gloss Pant", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "party", "title": "Silver Shimmer & Jet Black Slim", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "party", "title": "Midnight Jacquard & Tux Trousers", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "vacation", "title": "Resort Floral Silk & Linen Pant", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "vacation", "title": "Breeze White Camp & Striped Short", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "vacation", "title": "Sage Green Linen & Sand Chino", "discount_badge": "SAVE ₹400" } },
+        { "type": "look", "settings": { "category": "vacation", "title": "Terracotta Sun Shirt & Cream Pant", "discount_badge": "SAVE ₹400" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

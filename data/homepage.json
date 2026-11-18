@@ -1,0 +1,46 @@
+{
+  "banner": {
+    "imageDesktop": "./assets/hero-desktop.jpg",
+    "imageMobile": "./assets/hero-mobile.jpg",
+    "badgeTitle": "Personal Shopping Assistance",
+    "badgeSubtitle": "Across Indian Cities",
+    "headingLine1": "Someone is",
+    "headingLine2": "there.",
+    "subtitle": "Shop from anywhere.",
+    "button1": {
+      "text": "Book a Session",
+      "action": "book_session",
+      "link": "#/book",
+      "enabled": true
+    },
+    "button2": {
+      "text": "Explore Stores",
+      "action": "explore_stores",
+      "link": "#/stores",
+      "enabled": true
+    }
+  },
+  "featuredStores": [
+    {
+      "id": "store-silkwalk-studio",
+      "badge": "",
+      "rating": 4.8
+    },
+    {
+      "id": "store-kalyani-cotton",
+      "badge": "",
+      "rating": 4.9
+    },
+    {
+      "id": "store-urban-tops",
+      "badge": "Trending",
+      "rating": 4.7
+    }
+  ],
+  "featuredVideos": [
+    "video-01",
+    "video-02",
+    "video-03",
+    "video-04"
+  ]
+}

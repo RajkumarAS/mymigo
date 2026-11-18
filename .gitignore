@@ -1,0 +1,19 @@
+# Environment & secrets
+.env
+.env.local
+*.pem
+*service-account*.json
+
+# Local runtime state
+data/.booking-counter.json
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Ignore all environment files except the example
+.env*
+!.env.example

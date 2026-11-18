@@ -1,0 +1,93 @@
+[
+  {
+    "id": "usr-101",
+    "name": "Raajkumar",
+    "email": "raajkumar@mymigo.in",
+    "phone": "+91 98765 43210",
+    "city": "Coimbatore",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+    "preferences": "Handcrafted linen shirts, pure cotton weaves & heritage temple silver",
+    "connectionsCount": 396,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-12T10:00:00Z"
+  },
+  {
+    "id": "usr-102",
+    "name": "Ananya Sharma",
+    "email": "ananya@gmail.com",
+    "phone": "+91 98450 11223",
+    "city": "Bengaluru",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    "preferences": "Designer crop tops, festive silk drapes and handmade footwear",
+    "connectionsCount": 218,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-13T14:30:00Z"
+  },
+  {
+    "id": "usr-103",
+    "name": "Karthik M.",
+    "email": "karthik.m@outlook.com",
+    "phone": "+91 98840 99887",
+    "city": "Chennai",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+    "preferences": "Premium denim jackets, vintage washed jeans, tailored menswear",
+    "connectionsCount": 174,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-14T09:15:00Z"
+  },
+  {
+    "id": "usr-104",
+    "name": "Priya Nair",
+    "email": "priya.nair@yahoo.com",
+    "phone": "+91 97451 22334",
+    "city": "Kochi",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+    "preferences": "Temple jewellery, antique silver chokers and Kerala handloom sarees",
+    "connectionsCount": 310,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-14T16:45:00Z"
+  },
+  {
+    "id": "usr-1794807571",
+    "name": "Priya Sundaram",
+    "email": "priya.sundaram@testmymigo.com",
+    "phone": "+91 94433 22110",
+    "city": "Coimbatore",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    "preferences": "Traditional handloom sarees and ethnic jewellery",
+    "connectionsCount": 150,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-16T11:09:31.368736"
+  },
+  {
+    "id": "user-1",
+    "name": "Ananya Sundaram",
+    "email": "",
+    "phone": "9206955756",
+    "city": "Coimbatore",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    "preferences": "",
+    "connectionsCount": 248,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-17T21:15:44.344119"
+  },
+  {
+    "id": "usr-ananya",
+    "name": "Ananya Sundaram",
+    "email": "ananya.sundaram@example.com",
+    "phone": "9206955756",
+    "city": "Coimbatore",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    "preferences": "",
+    "connectionsCount": 248,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-17T21:57:07.384592"
+  }
+]

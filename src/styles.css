@@ -1,0 +1,230 @@
+/* MyMigo MVP — Editorial Minimalist Styles */
+
+:root {
+  --bg-canvas: #f0ede5;
+  --bg-surface: #ffffff;
+  --bg-muted: #e7e3d9;
+  --border-subtle: #dcd6c9;
+  --ink-primary: #141413;
+  --ink-secondary: #57534e;
+  --accent-primary: #004643;
+  --accent-hover: #003634;
+  --accent-soft: #e2edea;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg-canvas);
+  color: var(--ink-primary);
+}
+
+body, button, input, select, textarea {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--ink-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Ensure mobile pages have space above the floating pill dock */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 5.5rem;
+  }
+}
+
+.font-display,
+.font-serif {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+/* Subtle page entrance */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Hero slow editorial zoom */
+@keyframes subtleKenBurns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+.hero-bg-motion {
+  animation: subtleKenBurns 18s ease-out forwards;
+}
+
+/* Clean custom scrollbar for desktop pages */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6d3cd;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+/* Hide scrollbar utility for video reels, engagement rails & horizontal chip bars */
+.no-scrollbar::-webkit-scrollbar,
+#reels-snap-feed::-webkit-scrollbar,
+#reels-snap-feed *::-webkit-scrollbar,
+.reel-snap-item::-webkit-scrollbar,
+.reel-snap-item *::-webkit-scrollbar,
+.reel-video::-webkit-scrollbar,
+[data-reel-mute-btn]::-webkit-scrollbar,
+[data-reel-mute-btn] *::-webkit-scrollbar,
+[data-reel-like-btn]::-webkit-scrollbar,
+[data-reel-comments-btn]::-webkit-scrollbar,
+[data-reel-share-btn]::-webkit-scrollbar,
+[data-product-track]::-webkit-scrollbar,
+[data-product-track] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+  -webkit-appearance: none !important;
+}
+.no-scrollbar,
+#reels-snap-feed,
+#reels-snap-feed *,
+.reel-snap-item,
+.reel-snap-item *,
+.reel-video,
+[data-reel-mute-btn],
+[data-reel-mute-btn] *,
+[data-reel-like-btn],
+[data-reel-comments-btn],
+[data-reel-share-btn],
+[data-product-track],
+[data-product-track] * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Remove native browser search cancel button to prevent duplicate 'x' inside search inputs */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Instagram embed containers */
+.ig-embed-frame {
+  position: relative;
+  width: 100%;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+/* True 9:16 vertical Reel proportions on mobile & desktop */
+.ig-embed-frame.ig-embed-live {
+  aspect-ratio: 9 / 16;
+  min-height: 600px;
+}
+
+.ig-embed-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Tight profile embed height so mobile has no dead white space below the 6-post grid */
+.ig-profile-embed-box {
+  width: 100%;
+  height: 390px;
+  background-color: #ffffff;
+}
+
+@media (min-width: 640px) {
+  .ig-profile-embed-box {
+    height: 490px;
+  }
+}
+
+.ig-profile-embed-box iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Focus ring consistency */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Cal.com style dark time-slot scrollbar */
+.cal-slot-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.cal-slot-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cal-slot-scroll::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 9999px;
+}
+.cal-slot-scroll::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

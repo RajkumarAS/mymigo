@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MyMigo — Someone is there. Shop from anywhere.</title>
+  <meta
+    name="description"
+    content="Discover trusted stores and get help shopping from anywhere with MyMigo."
+  />
+
+  <!-- PWA Meta -->
+  <meta name="theme-color" content="#F0EDE5" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="./assets/icon-192.png" />
+
+  <!-- Editorial Typography: Roboto + Instrument Serif -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Roboto', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="./src/styles.css?v=20261118b" />
+</head>
+<body class="min-h-screen flex flex-col bg-[#F0EDE5] text-[#141413] antialiased">
+  <div id="app-navbar"></div>
+
+  <main id="app-main" class="flex-1">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-24 text-center">
+      <div class="w-10 h-10 mx-auto rounded-xl bg-[#004643] text-[#F0EDE5] flex items-center justify-center text-sm font-bold shadow-md animate-pulse">
+        M
+      </div>
+      <p class="mt-4 text-sm font-medium text-[#57534E]">Loading MyMigo...</p>
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script type="module" src="./src/main.js?v=20261118e"></script>
+
+  <script>
+    // Ensure fresh code is always loaded immediately without caching
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        for (const key of keys) {
+          caches.delete(key);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

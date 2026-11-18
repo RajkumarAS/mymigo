@@ -1,0 +1,1519 @@
+{%- comment -%}
+  DUCH STANDALONE CART DRAWER
+  Works 100% independently alongside any existing theme cart drawer without collision.
+  Features:
+  - Tiered Quantity Discount & Free Shipping Bar (DUCH200 - DUCH1800)
+  - Self-contained Cart Items List with Quantity +/- & Remove
+  - Add-On Products Carousel (Shirt & Pant selection with + ADD)
+  - Gokwik Style Bottom Order Summary Drawer with Price Breakdown
+  - Direct Checkout with Pre-applied Tiered Discount
+{%- endcomment -%}
+
+{%- liquid
+  assign item_qty = cart.item_count
+  assign progress_percent = 0
+  assign current_badge = blank
+  assign line1_text = blank
+  assign line2_text = blank
+
+  if item_qty == 0
+    assign progress_percent = 0
+    assign line1_text = "Your cart is empty"
+  elsif item_qty == 1
+    assign progress_percent = 11
+    assign current_badge = "DUCH200"
+    assign line1_text = "🎉 <strong>₹200 OFF Unlocked!</strong>"
+    assign line2_text = "Standard Shipping (₹80) applied • Add 1 more item for FREE Shipping & ₹400 OFF"
+  elsif item_qty == 2
+    assign progress_percent = 22
+    assign current_badge = "DUCH400"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹400 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹600 OFF"
+  elsif item_qty == 3
+    assign progress_percent = 33
+    assign current_badge = "DUCH600"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹600 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹800 OFF"
+  elsif item_qty == 4
+    assign progress_percent = 44
+    assign current_badge = "DUCH800"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹800 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹1,000 OFF"
+  elsif item_qty == 5
+    assign progress_percent = 55
+    assign current_badge = "DUCH1000"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹1,000 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹1,200 OFF"
+  elsif item_qty == 6
+    assign progress_percent = 66
+    assign current_badge = "DUCH1200"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹1,200 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹1,400 OFF"
+  elsif item_qty == 7
+    assign progress_percent = 77
+    assign current_badge = "DUCH1400"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹1,400 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹1,600 OFF"
+  elsif item_qty == 8
+    assign progress_percent = 88
+    assign current_badge = "DUCH1600"
+    assign line1_text = "🎉 <strong>FREE Shipping & ₹1,600 OFF Unlocked!</strong>"
+    assign line2_text = "Add 1 more item for ₹1,800 OFF"
+  elsif item_qty >= 9
+    assign progress_percent = 100
+    assign current_badge = "DUCH1800"
+    assign line1_text = "🎉 <strong>MAXIMUM TIER UNLOCKED!</strong>"
+    assign line2_text = "FREE Shipping & ₹1,800 OFF Applied"
+  else
+    assign progress_percent = 100
+    assign current_badge = "DUCH1800"
+    assign line1_text = "🎉 <strong>MAXIMUM TIER UNLOCKED!</strong>"
+    assign line2_text = "FREE Shipping & ₹1,800 OFF Applied"
+  endif
+-%}
+
+<div id="duch-cart-drawer" class="duch-cart-drawer" aria-hidden="true" data-section-id="{{ section.id }}">
+  <div class="duch-cart-drawer__backdrop" onclick="window.closeDuchCartDrawer && window.closeDuchCartDrawer()"></div>
+
+  <div class="duch-cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Cart">
+    <div class="duch-cart-drawer__header">
+      <h2 class="duch-cart-drawer__title">Cart</h2>
+      <button type="button" class="duch-cart-drawer__close" onclick="window.closeDuchCartDrawer && window.closeDuchCartDrawer()" aria-label="Close cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="duch-cart-drawer__body" id="duch-cart-drawer-body">
+      {%- if cart.empty? -%}
+        <div class="duch-cart-drawer__empty text-center">
+          <p class="duch-cart-empty-title">Your cart is empty</p>
+          <p class="duch-cart-empty-subtitle">Looks like you haven't added any items to your bag yet.</p>
+          <button type="button" class="duch-cart-empty-btn" onclick="window.closeDuchCartDrawer && window.closeDuchCartDrawer()">
+            Continue Shopping
+          </button>
+        </div>
+      {%- else -%}
+
+        {%- if item_qty > 0 -%}
+          <div class="cart-drawer__tiered-bar">
+            <div class="tiered-bar__header-row">
+              <div class="tiered-bar__line1">{{ line1_text }}</div>
+              {%- if current_badge != blank -%}
+                <span
+                  class="tiered-bar__badge"
+                  onclick="window.copyDuchCode && window.copyDuchCode(this, '{{ current_badge }}')"
+                  title="Click to copy & apply {{ current_badge }}"
+                >{{ current_badge }}</span>
+              {%- endif -%}
+            </div>
+            {%- if line2_text != blank -%}
+              <div class="tiered-bar__line2">{{ line2_text }}</div>
+            {%- endif -%}
+            <div class="tiered-bar__progress-track">
+              <div class="tiered-bar__progress-fill" style="width: {{ progress_percent }}%;"></div>
+            </div>
+          </div>
+        {%- endif -%}
+
+        <div class="duch-cart-items">
+          {%- for line_item in cart.items -%}
+            <div class="duch-cart-item" data-line-key="{{ line_item.key }}">
+              <div class="duch-cart-item__media">
+                {%- if line_item.image -%}
+                  {{ line_item.image | image_url: width: 220 | image_tag: loading: 'lazy', class: 'duch-cart-item__img', alt: line_item.title }}
+                {%- endif -%}
+              </div>
+
+              <div class="duch-cart-item__details">
+                <a href="{{ line_item.url }}" class="duch-cart-item__title">{{ line_item.product.title }}</a>
+
+                {%- unless line_item.product.has_only_default_variant -%}
+                  <div class="duch-cart-item__variant">{{ line_item.variant.title }}</div>
+                {%- endunless -%}
+
+                {%- if line_item.properties.size > 0 -%}
+                  <div class="duch-cart-item__properties">
+                    {%- for prop in line_item.properties -%}
+                      {%- assign first_char = prop.first | slice: 0 -%}
+                      {%- unless first_char == '_' or prop.last == blank -%}
+                        <span class="duch-cart-item__property">{{ prop.first }}: {{ prop.last }}</span>
+                      {%- endunless -%}
+                    {%- endfor -%}
+                  </div>
+                {%- endif -%}
+
+                <div class="duch-cart-item__price-row">
+                  {%- if line_item.original_price > line_item.final_price -%}
+                    <span class="duch-cart-item__price duch-cart-item__price--final">{{ line_item.final_price | money }}</span>
+                    <span class="duch-cart-item__price duch-cart-item__price--compare">{{ line_item.original_price | money }}</span>
+                  {%- elsif line_item.variant.compare_at_price > line_item.variant.price -%}
+                    <span class="duch-cart-item__price duch-cart-item__price--final">{{ line_item.final_price | money }}</span>
+                    <span class="duch-cart-item__price duch-cart-item__price--compare">{{ line_item.variant.compare_at_price | money }}</span>
+                  {%- else -%}
+                    <span class="duch-cart-item__price duch-cart-item__price--final">{{ line_item.final_price | money }}</span>
+                  {%- endif -%}
+                </div>
+
+                <div class="duch-cart-item__actions">
+                  <div class="duch-qty-selector">
+                    <button
+                      type="button"
+                      class="duch-qty-btn"
+                      onclick="window.changeDuchCartQty && window.changeDuchCartQty('{{ line_item.key }}', {{ line_item.quantity | minus: 1 }})"
+                      aria-label="Decrease quantity"
+                    >−</button>
+                    <span class="duch-qty-val">{{ line_item.quantity }}</span>
+                    <button
+                      type="button"
+                      class="duch-qty-btn"
+                      onclick="window.changeDuchCartQty && window.changeDuchCartQty('{{ line_item.key }}', {{ line_item.quantity | plus: 1 }})"
+                      aria-label="Increase quantity"
+                    >+</button>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="duch-cart-item__remove"
+                    onclick="window.changeDuchCartQty && window.changeDuchCartQty('{{ line_item.key }}', 0)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%} ADD-ON PRODUCTS SECTION (HORIZONTALLY SCROLLABLE CAROUSEL) {%- endcomment -%}
+        {%- assign addon_list = section.settings.addon_products -%}
+        {%- if addon_list == blank or addon_list.size == 0 -%}
+          {%- assign addon_list = section.settings.cross_sell_products -%}
+        {%- endif -%}
+
+        {%- if addon_list != blank and addon_list.size > 0 -%}
+          <div class="cart-drawer__addon-section">
+            <div class="addon-section__header">
+              <p class="h6">{{ section.settings.addon_title | default: 'Add On Products (Shirt & Pant)' }}</p>
+            </div>
+
+            <div class="addon-section__scroll-wrapper">
+              <div class="addon-section__list">
+                {%- for addon_prod in addon_list -%}
+                  {%- if addon_prod.available -%}
+                    {%- assign is_in_cart = false -%}
+                    {%- for cart_item in cart.items -%}
+                      {%- if cart_item.product_id == addon_prod.id -%}
+                        {%- assign is_in_cart = true -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+
+                    <div class="addon-card {% if is_in_cart %}is-in-cart{% endif %}">
+                      <div class="addon-card__image-wrap">
+                        {%- if addon_prod.featured_media -%}
+                          {{ addon_prod.featured_media | image_url: width: 300 | image_tag: loading: 'lazy', class: 'addon-card__img', alt: addon_prod.title }}
+                        {%- endif -%}
+                      </div>
+
+                      <div class="addon-card__info">
+                        <a href="{{ addon_prod.url }}" class="addon-card__title" title="{{ addon_prod.title }}">{{ addon_prod.title }}</a>
+                        {%- assign addon_offer_price = addon_prod.price | minus: 20000 -%}
+                        <div class="addon-card__price">
+                          <span>{{ addon_offer_price | money }}</span>
+                          <span class="addon-card__compare-price">{{ addon_prod.price | money }}</span>
+                        </div>
+
+                        {%- if addon_prod.variants.size > 1 -%}
+                          <select class="addon-card__variant-select" data-addon-select {% if is_in_cart %}disabled{% endif %}>
+                            {%- for variant in addon_prod.variants -%}
+                              {%- if variant.available -%}
+                                <option value="{{ variant.id }}">{{ variant.title }}</option>
+                              {%- endif -%}
+                            {%- endfor -%}
+                          </select>
+                        {%- else -%}
+                          <input type="hidden" class="addon-card__variant-id" value="{{ addon_prod.selected_or_first_available_variant.id | default: addon_prod.variants.first.id }}">
+                        {%- endif -%}
+                      </div>
+
+                      <div class="addon-card__action">
+                        {%- if is_in_cart -%}
+                          <button type="button" class="addon-card__add-btn is-added" disabled>
+                            ✓ ADDED
+                          </button>
+                        {%- else -%}
+                          <button
+                            type="button"
+                            class="addon-card__add-btn"
+                            onclick="window.addCartAddon && window.addCartAddon(this, event)"
+                            data-variant-id="{{ addon_prod.selected_or_first_available_variant.id | default: addon_prod.variants.first.id }}"
+                          >
+                            + ADD
+                          </button>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  {%- endif -%}
+                {%- endfor -%}
+              </div>
+            </div>
+          </div>
+        {%- endif -%}
+
+      {%- endif -%}
+    </div>
+
+    {%- unless cart.empty? -%}
+      <div class="duch-cart-drawer__footer" id="duch-cart-drawer-footer">
+        <form action="{{ routes.cart_url }}" method="POST" class="duch-footer-form">
+          {%- if current_badge != blank -%}
+            <input type="hidden" name="discount" value="{{ current_badge }}">
+          {%- endif -%}
+
+          {%- if section.settings.show_cart_note -%}
+            <details class="duch-order-note-details">
+              <summary class="duch-order-note-summary">Add order note</summary>
+              <div class="duch-order-note-wrap">
+                <textarea
+                  name="note"
+                  rows="3"
+                  class="duch-order-note-input"
+                  placeholder="Special instructions for seller..."
+                >{{ cart.note }}</textarea>
+              </div>
+            </details>
+          {%- endif -%}
+
+          {%- if section.settings.show_shipping_text -%}
+            <p class="duch-shipping-text">Taxes and shipping calculated at checkout</p>
+          {%- endif -%}
+
+          {%- comment -%} GOKWIK / NATIVE ORDER SUMMARY DRAWER {%- endcomment -%}
+          {%- liquid
+            assign mrp_total = 0
+            for item in cart.items
+              if item.variant.compare_at_price and item.variant.compare_at_price > item.variant.price
+                assign line_mrp = item.variant.compare_at_price | times: item.quantity
+              else
+                assign line_mrp = item.original_line_price
+              endif
+              assign mrp_total = mrp_total | plus: line_mrp
+            endfor
+
+            assign tiered_discount_amount = 0
+            if item_qty == 1
+              assign tiered_discount_amount = 20000
+            elsif item_qty == 2
+              assign tiered_discount_amount = 40000
+            elsif item_qty == 3
+              assign tiered_discount_amount = 60000
+            elsif item_qty == 4
+              assign tiered_discount_amount = 80000
+            elsif item_qty == 5
+              assign tiered_discount_amount = 100000
+            elsif item_qty == 6
+              assign tiered_discount_amount = 120000
+            elsif item_qty == 7
+              assign tiered_discount_amount = 140000
+            elsif item_qty == 8
+              assign tiered_discount_amount = 160000
+            elsif item_qty >= 9
+              assign tiered_discount_amount = 180000
+            endif
+
+            assign shipping_fee = 0
+            if item_qty == 1
+              assign shipping_fee = 8000
+            endif
+
+            assign subtotal_price = cart.total_price
+            assign total_savings = mrp_total | minus: subtotal_price | plus: tiered_discount_amount
+            assign final_total = subtotal_price | minus: tiered_discount_amount | plus: shipping_fee
+            if final_total < 0
+              assign final_total = 0
+            endif
+
+            assign discount_percent = 0
+            if mrp_total > 0
+              assign discount_percent = total_savings | times: 100 | divided_by: mrp_total
+            endif
+          -%}
+
+          <div class="cart-drawer__gokwik-summary">
+            {%- if total_savings > 0 -%}
+              <div class="gokwik-savings-badge">
+                🎉 {{ total_savings | money }} Saved so far!
+              </div>
+            {%- endif -%}
+
+            <div class="gokwik-bottom-drawer" id="gokwik-bottom-drawer">
+              <button
+                type="button"
+                class="gokwik-card__trigger"
+                onclick="window.toggleOrderSummaryDrawer && window.toggleOrderSummaryDrawer(this, event)"
+                aria-expanded="false"
+              >
+                <div class="gokwik-trigger__left">
+                  <span class="gokwik-trigger__icon">₹</span>
+                  <span class="gokwik-trigger__title">Estimated Total</span>
+                  <svg class="gokwik-trigger__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="gokwik-trigger__right">
+                  {%- if mrp_total > final_total -%}
+                    <span class="gokwik-trigger__mrp">{{ mrp_total | money }}</span>
+                  {%- endif -%}
+                  <span class="gokwik-trigger__final">{{ final_total | money }}</span>
+                  {%- if discount_percent > 0 -%}
+                    <span class="gokwik-trigger__discount">({{ discount_percent }}% OFF)</span>
+                  {%- endif -%}
+                </div>
+              </button>
+
+              <div class="gokwik-pill-row">
+                <span class="gokwik-pill gokwik-pill--shipping">
+                  🚚 Shipping: {% if shipping_fee > 0 %}₹80{% else %}FREE{% endif %}
+                </span>
+                {%- if current_badge != blank -%}
+                  <span class="gokwik-pill gokwik-pill--code">
+                    🏷️ {{ current_badge }} Applied
+                  </span>
+                {%- endif -%}
+              </div>
+
+              <div class="gokwik-drawer-content" aria-hidden="true">
+                <div class="gokwik-table">
+                  <div class="gokwik-row">
+                    <span class="gokwik-row-label">Total MRP</span>
+                    <span class="gokwik-row-value">{{ mrp_total | money }}</span>
+                  </div>
+
+                  {%- if tiered_discount_amount > 0 -%}
+                    <div class="gokwik-row gokwik-row--discount">
+                      <span class="gokwik-row-label">Tiered Offer Discount</span>
+                      <span class="gokwik-row-value">-{{ tiered_discount_amount | money }}</span>
+                    </div>
+                  {%- endif -%}
+
+                  <div class="gokwik-row">
+                    <span class="gokwik-row-label">Shipping</span>
+                    <span class="gokwik-row-value">{% if shipping_fee > 0 %}₹80{% else %}<strong style="color: #16a34a;">FREE</strong>{% endif %}</span>
+                  </div>
+
+                  <div class="gokwik-divider"></div>
+
+                  <div class="gokwik-row gokwik-row--total">
+                    <span class="gokwik-row-label">Estimated Total</span>
+                    <span class="gokwik-row-value gokwik-total-val">{{ final_total | money }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="duch-drawer__btn-group">
+            {%- if section.settings.show_view_cart_button -%}
+              <a href="{{ routes.cart_url }}" class="duch-drawer__view-cart-btn">
+                View Cart
+              </a>
+            {%- endif -%}
+
+            {%- if section.settings.show_checkout_button -%}
+              <button type="submit" name="checkout" class="duch-drawer__checkout-btn">
+                <span>CHECKOUT</span>
+                <span class="duch-drawer__checkout-dot">•</span>
+                <span>{{ final_total | money }}</span>
+              </button>
+            {%- endif -%}
+          </div>
+        </form>
+      </div>
+    {%- endunless -%}
+  </div>
+</div>
+
+<style>
+  /* STANDALONE DUCH CART DRAWER ROOT & OVERLAY */
+  .duch-cart-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2147483640 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: visibility 0.3s ease, opacity 0.3s ease !important;
+  }
+
+  .duch-cart-drawer.is-open {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .duch-cart-drawer__backdrop {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
+
+  .duch-cart-drawer__panel {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    height: 100% !important;
+    background: #ffffff !important;
+    color: #18181b !important;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    box-sizing: border-box !important;
+  }
+
+  .duch-cart-drawer.is-open .duch-cart-drawer__panel {
+    transform: translateX(0) !important;
+  }
+
+  /* DRAWER HEADER */
+  .duch-cart-drawer__header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #e4e4e7 !important;
+    background: #ffffff !important;
+  }
+
+  .duch-cart-drawer__title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: #18181b !important;
+    margin: 0 !important;
+  }
+
+  .duch-cart-drawer__close {
+    background: transparent !important;
+    border: none !important;
+    color: #71717a !important;
+    cursor: pointer !important;
+    padding: 6px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: color 0.15s ease, background 0.15s ease !important;
+  }
+
+  .duch-cart-drawer__close:hover {
+    color: #18181b !important;
+    background: #f4f4f5 !important;
+  }
+
+  /* DRAWER BODY */
+  .duch-cart-drawer__body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 20px !important;
+  }
+
+  /* EMPTY STATE */
+  .duch-cart-drawer__empty {
+    padding: 60px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .duch-cart-empty-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #18181b !important;
+    margin-bottom: 6px !important;
+  }
+
+  .duch-cart-empty-subtitle {
+    font-size: 13.5px !important;
+    color: #71717a !important;
+    margin-bottom: 20px !important;
+  }
+
+  .duch-cart-empty-btn {
+    background: #18181b !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+  }
+
+  /* TIERED DISCOUNTS & SHIPPING BAR STYLES */
+  .cart-drawer__tiered-bar {
+    background: #18181b !important;
+    color: #ffffff !important;
+    padding: 14px 16px !important;
+    margin: 0 0 16px !important;
+    border-radius: 10px !important;
+  }
+
+  .tiered-bar__header-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .tiered-bar__line1 {
+    font-size: 13.5px !important;
+    color: #ffffff !important;
+    line-height: 1.3 !important;
+  }
+
+  .tiered-bar__line2 {
+    font-size: 12px !important;
+    color: #d4d4d8 !important;
+    margin-top: 4px !important;
+    line-height: 1.3 !important;
+  }
+
+  .tiered-bar__badge {
+    background: #22c55e !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+  }
+
+  .tiered-bar__badge:hover {
+    background-color: #16a34a !important;
+    transform: scale(1.05) !important;
+  }
+
+  .tiered-bar__progress-track {
+    width: 100% !important;
+    height: 5px !important;
+    background: #3f3f46 !important;
+    border-radius: 9999px !important;
+    margin-top: 10px !important;
+    overflow: hidden !important;
+  }
+
+  .tiered-bar__progress-fill {
+    height: 100% !important;
+    background: #22c55e !important;
+    border-radius: 9999px !important;
+    transition: width 0.4s ease !important;
+  }
+
+  /* SELF-CONTAINED CART ITEMS */
+  .duch-cart-items {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .duch-cart-item {
+    display: flex !important;
+    gap: 14px !important;
+    padding-bottom: 16px !important;
+    border-bottom: 1px solid #f4f4f5 !important;
+  }
+
+  .duch-cart-item__media {
+    width: 80px !important;
+    height: 105px !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #f4f4f5 !important;
+  }
+
+  .duch-cart-item__img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  .duch-cart-item__details {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .duch-cart-item__title {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #18181b !important;
+    text-decoration: none !important;
+    line-height: 1.3 !important;
+  }
+
+  .duch-cart-item__title:hover {
+    color: #000000 !important;
+  }
+
+  .duch-cart-item__variant {
+    font-size: 12px !important;
+    color: #71717a !important;
+  }
+
+  .duch-cart-item__properties {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    font-size: 11px !important;
+    color: #71717a !important;
+  }
+
+  .duch-cart-item__price-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-top: 2px !important;
+  }
+
+  .duch-cart-item__price--final {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #18181b !important;
+  }
+
+  .duch-cart-item__price--compare {
+    font-size: 12px !important;
+    color: #a1a1aa !important;
+    text-decoration: line-through !important;
+  }
+
+  .duch-cart-item__actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-top: 6px !important;
+  }
+
+  .duch-qty-selector {
+    display: inline-flex !important;
+    align-items: center !important;
+    border: 1px solid #d4d4d8 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+
+  .duch-qty-btn {
+    background: transparent !important;
+    border: none !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 15px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #18181b !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .duch-qty-btn:hover {
+    background: #f4f4f5 !important;
+  }
+
+  .duch-qty-val {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    min-width: 24px !important;
+    text-align: center !important;
+  }
+
+  .duch-cart-item__remove {
+    background: transparent !important;
+    border: none !important;
+    font-size: 12px !important;
+    color: #71717a !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+  }
+
+  .duch-cart-item__remove:hover {
+    color: #ef4444 !important;
+  }
+
+  /* ADD-ON PRODUCTS CAROUSEL STYLES */
+  .cart-drawer__addon-section {
+    margin: 20px 0 16px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #e4e4e7 !important;
+  }
+
+  .addon-section__header {
+    margin-bottom: 12px !important;
+  }
+
+  .addon-section__header .h6 {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #18181b !important;
+    margin: 0 !important;
+  }
+
+  .addon-section__scroll-wrapper {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    padding-bottom: 8px !important;
+  }
+
+  .addon-section__scroll-wrapper::-webkit-scrollbar {
+    height: 4px !important;
+  }
+
+  .addon-section__scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #d4d4d8 !important;
+    border-radius: 4px !important;
+  }
+
+  .addon-section__list {
+    display: flex !important;
+    gap: 12px !important;
+    width: max-content !important;
+  }
+
+  .addon-card {
+    width: 170px !important;
+    background: #ffffff !important;
+    border: 1px solid #e4e4e7 !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+  }
+
+  .addon-card:hover {
+    border-color: #a1a1aa !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+  }
+
+  .addon-card.is-in-cart {
+    opacity: 0.7 !important;
+    background: #fafafa !important;
+  }
+
+  .addon-card__image-wrap {
+    width: 100% !important;
+    height: 140px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: #f4f4f5 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .addon-card__img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  .addon-card__info {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .addon-card__title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #18181b !important;
+    text-decoration: none !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    min-height: 30px !important;
+  }
+
+  .addon-card__price {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #16a34a !important;
+  }
+
+  .addon-card__compare-price {
+    font-size: 11px !important;
+    color: #a1a1aa !important;
+    text-decoration: line-through !important;
+    font-weight: 400 !important;
+  }
+
+  .addon-card__variant-select {
+    width: 100% !important;
+    font-size: 11px !important;
+    padding: 3px 6px !important;
+    border: 1px solid #d4d4d8 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    margin-top: 4px !important;
+    outline: none !important;
+  }
+
+  .addon-card__action {
+    margin-top: 8px !important;
+  }
+
+  .addon-card__add-btn {
+    width: 100% !important;
+    background: #18181b !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 0 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .addon-card__add-btn:hover {
+    background: #27272a !important;
+  }
+
+  .addon-card__add-btn.is-added,
+  .addon-card__add-btn:disabled {
+    background: #e4e4e7 !important;
+    color: #71717a !important;
+    cursor: not-allowed !important;
+  }
+
+  /* DRAWER FOOTER */
+  .duch-cart-drawer__footer {
+    padding: 16px 20px !important;
+    border-top: 1px solid #e4e4e7 !important;
+    background: #ffffff !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .duch-order-note-details {
+    margin-bottom: 8px !important;
+  }
+
+  .duch-order-note-summary {
+    font-size: 12px !important;
+    color: #71717a !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+  }
+
+  .duch-order-note-wrap {
+    margin-top: 6px !important;
+  }
+
+  .duch-order-note-input {
+    width: 100% !important;
+    padding: 8px !important;
+    border: 1px solid #d4d4d8 !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .duch-shipping-text {
+    font-size: 12px !important;
+    color: #71717a !important;
+    margin: 4px 0 8px !important;
+  }
+
+  /* GOKWIK / NATIVE ORDER SUMMARY DRAWER STYLES */
+  .cart-drawer__gokwik-summary {
+    margin: 10px 0 12px !important;
+    background: #ffffff !important;
+  }
+
+  .gokwik-savings-badge {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    border-radius: 9999px !important;
+    display: inline-block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .gokwik-bottom-drawer {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  .gokwik-card__trigger {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 12px !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    text-align: left !important;
+  }
+
+  .gokwik-trigger__left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .gokwik-trigger__icon {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    background: #18181b !important;
+    color: #fff !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+  }
+
+  .gokwik-trigger__title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+  }
+
+  .gokwik-trigger__chevron {
+    transition: transform 0.2s ease !important;
+  }
+
+  .gokwik-bottom-drawer.is-open .gokwik-trigger__chevron {
+    transform: rotate(180deg) !important;
+  }
+
+  .gokwik-trigger__right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .gokwik-trigger__mrp {
+    font-size: 11px !important;
+    color: #9ca3af !important;
+    text-decoration: line-through !important;
+  }
+
+  .gokwik-trigger__final {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+  }
+
+  .gokwik-trigger__discount {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #16a34a !important;
+  }
+
+  .gokwik-pill-row {
+    display: flex !important;
+    gap: 6px !important;
+    padding: 0 12px 10px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .gokwik-pill {
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+  }
+
+  .gokwik-pill--shipping {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+  }
+
+  .gokwik-pill--code {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+
+  .gokwik-drawer-content {
+    display: none !important;
+    padding: 10px 12px !important;
+    background: #f9fafb !important;
+    border-top: 1px dashed #e5e7eb !important;
+  }
+
+  .gokwik-bottom-drawer.is-open .gokwik-drawer-content {
+    display: block !important;
+  }
+
+  .gokwik-table {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .gokwik-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 12.5px !important;
+    color: #4b5563 !important;
+  }
+
+  .gokwik-row--discount {
+    color: #16a34a !important;
+    font-weight: 600 !important;
+  }
+
+  .gokwik-divider {
+    height: 1px !important;
+    background: #e5e7eb !important;
+    margin: 4px 0 !important;
+  }
+
+  .gokwik-row--total {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .gokwik-total-val {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+  }
+
+  /* BUTTONS GROUP */
+  .duch-drawer__btn-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .duch-drawer__view-cart-btn {
+    display: block !important;
+    text-align: center !important;
+    padding: 12px !important;
+    background: transparent !important;
+    color: #18181b !important;
+    border: 1px solid #18181b !important;
+    border-radius: 8px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    letter-spacing: 0.03em !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+  }
+
+  .duch-drawer__view-cart-btn:hover {
+    background: #f4f4f5 !important;
+  }
+
+  .duch-drawer__checkout-btn {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 14px !important;
+    background: #18181b !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .duch-drawer__checkout-btn:hover {
+    background: #27272a !important;
+  }
+
+  .duch-drawer__checkout-dot {
+    opacity: 0.6 !important;
+  }
+
+  html.duch-drawer-locked,
+  body.duch-drawer-locked {
+    overflow: hidden !important;
+  }
+</style>
+
+<script>
+  // 1. OPEN / CLOSE HANDLERS
+  window.openDuchCartDrawer = function() {
+    var drawer = document.getElementById('duch-cart-drawer');
+    if (drawer) {
+      drawer.setAttribute('aria-hidden', 'false');
+      drawer.classList.add('is-open');
+      document.documentElement.classList.add('duch-drawer-locked');
+      document.body.classList.add('duch-drawer-locked');
+    }
+  };
+
+  window.closeDuchCartDrawer = function() {
+    var drawer = document.getElementById('duch-cart-drawer');
+    if (drawer) {
+      drawer.setAttribute('aria-hidden', 'true');
+      drawer.classList.remove('is-open');
+      document.documentElement.classList.remove('duch-drawer-locked');
+      document.body.classList.remove('duch-drawer-locked');
+    }
+  };
+
+  window.toggleDuchCartDrawer = function() {
+    var drawer = document.getElementById('duch-cart-drawer');
+    if (drawer) {
+      if (drawer.classList.contains('is-open')) {
+        window.closeDuchCartDrawer();
+      } else {
+        window.openDuchCartDrawer();
+      }
+    }
+  };
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      var drawer = document.getElementById('duch-cart-drawer');
+      if (drawer && drawer.classList.contains('is-open')) {
+        window.closeDuchCartDrawer();
+      }
+    }
+  });
+
+  // Dedicated Open Events (Allows Runway & custom buttons to open this drawer specifically)
+  ['duch:drawer:open', 'duch:cart:open'].forEach(function(evt) {
+    document.addEventListener(evt, function() {
+      window.openDuchCartDrawer();
+    });
+  });
+
+  // Catch clicks on any elements with data-duch-cart-open
+  document.addEventListener('click', function(e) {
+    var trigger = e.target && e.target.closest && e.target.closest('[data-duch-cart-open], [data-open-duch-drawer], [data-duch-open]');
+    if (trigger) {
+      e.preventDefault();
+      window.openDuchCartDrawer();
+    }
+  });
+
+  // 2. QUANTITY CHANGER (+ / - / Remove)
+  window.changeDuchCartQty = function(lineKey, newQuantity) {
+    if (!lineKey) return;
+    var root = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
+    var changeUrl = root + (root.endsWith('/') ? '' : '/') + 'cart/change.js';
+
+    fetch(changeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: lineKey,
+        quantity: parseInt(newQuantity, 10)
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      // Re-render standalone drawer
+      window.refreshDuchCartDrawer();
+
+      // Dispatch standard cart refresh for store headers
+      document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+      document.documentElement.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+    })
+    .catch(function(err) {
+      console.error('Error updating cart quantity:', err);
+    });
+  };
+
+  // 3. ADDON PRODUCT ADDER
+  if (!window.addCartAddon) {
+    window.addCartAddon = function(btn, event) {
+      if (event) {
+        if (event._addonHandled) return;
+        event._addonHandled = true;
+        if (event.preventDefault) event.preventDefault();
+        if (event.stopPropagation) event.stopPropagation();
+      }
+
+      if (!btn || btn.dataset.adding === 'true' || btn.disabled) return;
+
+      var card = btn.closest('.addon-card');
+      var variantId = btn.getAttribute('data-variant-id');
+
+      if (card) {
+        var select = card.querySelector('[data-addon-select]');
+        if (select && select.value) {
+          variantId = select.value;
+        } else {
+          var hiddenInput = card.querySelector('.addon-card__variant-id');
+          if (hiddenInput && hiddenInput.value) {
+            variantId = hiddenInput.value;
+          }
+        }
+      }
+
+      if (!variantId) {
+        alert('Please select a variant.');
+        return;
+      }
+
+      btn.dataset.adding = 'true';
+      btn.disabled = true;
+      var originalText = btn.textContent;
+      btn.textContent = '...';
+
+      var root = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
+      var addUrl = root + (root.endsWith('/') ? '' : '/') + 'cart/add.js';
+
+      var formData = new FormData();
+      formData.append('id', variantId);
+      formData.append('quantity', '1');
+
+      fetch(addUrl, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+      .then(function(res) {
+        return res.json().then(function(data) {
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        if (!result.ok) {
+          var errorMsg = (result.data && (result.data.description || result.data.message)) || 'Could not add item to cart.';
+          alert(errorMsg);
+          btn.dataset.adding = 'false';
+          btn.disabled = false;
+          btn.textContent = originalText;
+          return;
+        }
+
+        btn.textContent = '✓ ADDED';
+        btn.classList.add('is-added');
+
+        window.refreshDuchCartDrawer();
+
+        document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+        document.documentElement.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+      })
+      .catch(function(err) {
+        console.error('Error adding addon product:', err);
+        btn.dataset.adding = 'false';
+        btn.disabled = false;
+        btn.textContent = originalText;
+      });
+    };
+  }
+
+  // 4. DISCOUNT CODE COPY & APPLY HELPER
+  if (!window.copyDuchCode) {
+    window.copyDuchCode = function(badgeEl, code) {
+      if (!code) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function() {
+          var original = badgeEl.textContent;
+          badgeEl.textContent = 'COPIED!';
+          setTimeout(function() {
+            badgeEl.textContent = original;
+          }, 1800);
+        }).catch(function() {});
+      }
+
+      var root = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
+      fetch(root + (root.endsWith('/') ? '' : '/') + 'cart/update.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ discount: code })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function() {
+        window.refreshDuchCartDrawer();
+        document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+      })
+      .catch(function(err) {
+        console.error('Error applying discount code:', err);
+      });
+    };
+  }
+
+  // 5. GOKWIK ACCORDION TOGGLE
+  if (!window.toggleOrderSummaryDrawer) {
+    window.toggleOrderSummaryDrawer = function(targetOrEvent, maybeEvent) {
+      var e = maybeEvent || (targetOrEvent && (targetOrEvent.preventDefault || targetOrEvent.stopPropagation) ? targetOrEvent : null);
+      if (e) {
+        if (e._duchDrawerHandled) return;
+        e._duchDrawerHandled = true;
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      var el = (targetOrEvent && targetOrEvent.nodeType) ? targetOrEvent : (e && e.target ? e.target : null);
+      var drawer = el && el.closest ? el.closest('.gokwik-bottom-drawer') : document.getElementById('gokwik-bottom-drawer');
+      if (!drawer) drawer = document.querySelector('.gokwik-bottom-drawer');
+      if (!drawer) return;
+      var isOpen = drawer.classList.toggle('is-open');
+      var trigger = drawer.querySelector('.gokwik-card__trigger');
+      var content = drawer.querySelector('.gokwik-drawer-content');
+      if (trigger) trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (content) content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    };
+  }
+
+  // 6. DYNAMIC SECTION RE-RENDER (AJAX REFRESH)
+  window.refreshDuchCartDrawer = function() {
+    var drawerEl = document.getElementById('duch-cart-drawer');
+    if (!drawerEl) return;
+    var sectionId = drawerEl.getAttribute('data-section-id');
+    var fetchUrl = window.location.pathname + '?section_id=' + sectionId;
+
+    fetch(fetchUrl)
+      .then(function(res) { return res.text(); })
+      .then(function(html) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+
+        var newBody = doc.getElementById('duch-cart-drawer-body');
+        var curBody = document.getElementById('duch-cart-drawer-body');
+        if (newBody && curBody) {
+          curBody.innerHTML = newBody.innerHTML;
+        }
+
+        var newFooter = doc.getElementById('duch-cart-drawer-footer');
+        var curFooter = document.getElementById('duch-cart-drawer-footer');
+        if (newFooter && curFooter) {
+          curFooter.innerHTML = newFooter.innerHTML;
+        } else if (newFooter && !curFooter) {
+          var panel = drawerEl.querySelector('.duch-cart-drawer__panel');
+          if (panel) panel.appendChild(newFooter);
+        } else if (!newFooter && curFooter) {
+          curFooter.remove();
+        }
+      })
+      .catch(function(err) {
+        console.warn('Could not refresh duch drawer HTML:', err);
+      });
+  };
+
+  // Also listen for general cart refresh
+  document.addEventListener('cart:refresh', function() {
+    window.refreshDuchCartDrawer();
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Duch Cart Drawer",
+  "class": "shopify-section--duch-cart-drawer",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Standalone Duch Cart Drawer with Tiered Discounts, Add-Ons Carousel, and Gokwik Summary. Works independently without disturbing the store's default cart drawer."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart_note",
+      "label": "Show cart note",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_shipping_text",
+      "label": "Show shipping text",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_cart_button",
+      "label": "Show view cart button",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_checkout_button",
+      "label": "Show checkout button",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Add-On Products (Shirt & Pant Selection)"
+    },
+    {
+      "type": "product_list",
+      "id": "addon_products",
+      "label": "Add-On Products (Shirt, Pant, etc.)",
+      "info": "Manually select products to display as Add-Ons in the Cart Drawer",
+      "limit": 10
+    },
+    {
+      "type": "inline_richtext",
+      "id": "addon_title",
+      "label": "Add-On Products Heading",
+      "default": "Add On Products (Shirt & Pant)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Duch Cart Drawer"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUCH — Shop By Look (Categorized Grid & Modal Preview)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000000;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Demo Nav Bar */
+    .demo-navbar {
+      background: #000000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .demo-logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      color: #ffffff;
+    }
+
+    .demo-view-toggles {
+      display: flex;
+      gap: 8px;
+    }
+
+    .demo-toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .demo-toggle-btn.is-active {
+      background: #ffffff;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .device-shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      transition: max-width 0.3s ease;
+    }
+
+    .device-shell.mobile-view {
+      max-width: 420px;
+      border: 8px solid #222;
+      border-radius: 36px;
+      margin: 20px auto;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    }
+
+    /* =========================================================================
+       SHOP BY LOOK SECTION STYLES
+       ========================================================================= */
+    .shop-by-look-section {
+      background: #0e0e0e;
+      padding: 40px 20px 60px;
+    }
+
+    .sbl-container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    .sbl-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .sbl-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .sbl-subheading {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 16px;
+    }
+
+    .sbl-promo-badge {
+      display: inline-block;
+      background: #fbf7ee;
+      color: #111111;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    /* 4 Category Filter Tabs — Capsule Track & Pill Design */
+    .sbl-tabs-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 32px;
+      padding: 0 16px;
+      width: 100%;
+    }
+
+    .sbl-tabs {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      background: #1c1c1c;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+      max-width: 100%;
+    }
+
+    .sbl-tab-btn {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.85);
+      border: none;
+      border-radius: 9999px;
+      padding: 10px 24px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    .sbl-tab-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .sbl-tab-btn.is-active {
+      background: #ffffff;
+      color: #0e0e0e;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .device-shell.mobile-view .sbl-tabs-wrapper,
+    @media (max-width: 768px) {
+      .sbl-tabs-wrapper {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding: 0 8px !important;
+        margin-bottom: 20px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+      }
+
+      .device-shell.mobile-view .sbl-tabs {
+        width: 100% !important;
+        max-width: 440px !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        align-items: center !important;
+        background: #181818 !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
+        border-radius: 9999px !important;
+        padding: 3px !important;
+        gap: 2px !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        margin: 0 auto !important;
+      }
+
+      .device-shell.mobile-view .sbl-tab-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px 2px !important;
+        font-size: clamp(0.64rem, 2.6vw, 0.74rem) !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.01em !important;
+        text-align: center !important;
+        border-radius: 9999px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+      }
+
+      .device-shell.mobile-view .sbl-tab-btn.is-active {
+        background: #ffffff !important;
+        color: #0e0e0e !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+      }
+    }
+
+    /* Grid */
+    .sbl-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px 16px;
+    }
+
+    .device-shell.mobile-view .sbl-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 12px 10px !important;
+    }
+
+    /* Card */
+    .sbl-card {
+      background: #161616;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .sbl-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .sbl-card.is-hidden {
+      display: none !important;
+    }
+
+    .sbl-card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      background: #1e1e1e;
+      cursor: pointer;
+    }
+
+    .sbl-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .sbl-card:hover .sbl-card-img {
+      transform: scale(1.04);
+    }
+
+    .sbl-photos-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .sbl-card-details {
+      padding: 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .device-shell.mobile-view .sbl-card-details {
+      padding: 10px 8px 12px;
+    }
+
+    .sbl-card-title {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0 0 8px;
+      line-height: 1.25;
+      cursor: pointer;
+    }
+
+    .device-shell.mobile-view .sbl-card-title {
+      font-size: 0.84rem;
+      margin-bottom: 6px;
+    }
+
+    .sbl-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .device-shell.mobile-view .sbl-price-row {
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .sbl-price-current {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .device-shell.mobile-view .sbl-price-current {
+      font-size: 0.92rem;
+    }
+
+    .sbl-price-compare {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.45);
+      text-decoration: line-through;
+    }
+
+    .sbl-price-save {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #4ade80;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .sbl-btn-shop {
+      width: 100%;
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 4px;
+      padding: 11px 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: auto;
+    }
+
+    .device-shell.mobile-view .sbl-btn-shop {
+      padding: 9px 8px;
+      font-size: 0.72rem;
+    }
+
+    .sbl-btn-shop:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    /* Modal */
+    .sbl-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s;
+    }
+
+    .sbl-modal.is-active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .sbl-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+    }
+
+    .sbl-modal-dialog {
+      position: relative;
+      background: #141414;
+      color: #ffffff;
+      width: 100%;
+      max-width: 960px;
+      max-height: 90vh;
+      border-radius: 12px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+      z-index: 2;
+      transform: scale(0.96) translateY(12px);
+      transition: transform 0.3s ease;
+    }
+
+    .sbl-modal.is-active .sbl-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .sbl-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    .sbl-modal-close:hover {
+      background: #ffffff;
+      color: #000;
+    }
+
+    .sbl-modal-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      min-height: 520px;
+    }
+
+    @media (max-width: 820px) {
+      .sbl-modal-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Modal Gallery */
+    .sbl-gallery-wrap {
+      position: relative;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .sbl-gallery-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      max-height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .sbl-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: scale(0.97);
+    }
+
+    .sbl-slide.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .sbl-slide-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 6px;
+    }
+
+    .sbl-gallery-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      color: #111111;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+
+    .sbl-gallery-arrow--prev { left: 12px; }
+    .sbl-gallery-arrow--next { right: 12px; }
+
+    .sbl-gallery-thumbs {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      overflow-x: auto;
+      max-width: 100%;
+      scrollbar-width: none;
+    }
+    .sbl-gallery-thumbs::-webkit-scrollbar { display: none; }
+
+    .sbl-thumb-btn {
+      width: 50px;
+      height: 60px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      padding: 0;
+      background: #222;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .sbl-thumb-btn.is-active {
+      opacity: 1;
+      border-color: #ffffff;
+    }
+
+    .sbl-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Modal Details */
+    .sbl-details-wrap {
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sbl-modal-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #4ade80;
+      margin-bottom: 6px;
+    }
+
+    .sbl-modal-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .sbl-modal-pricing {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .sbl-modal-price {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .sbl-modal-compare {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.45);
+      text-decoration: line-through;
+    }
+
+    .sbl-modal-save {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #111111;
+      background: #4ade80;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .sbl-discount-banner {
+      background: rgba(74, 222, 128, 0.12);
+      border: 1px dashed rgba(74, 222, 128, 0.35);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 0.8rem;
+      color: #86efac;
+      margin-bottom: 20px;
+    }
+
+    .sbl-piece-box {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .sbl-piece-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .sbl-piece-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .sbl-size-chart-link {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .sbl-size-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sbl-size-pill {
+      background: #1f1f1f;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 42px;
+      text-align: center;
+    }
+
+    .sbl-size-pill.is-selected {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      font-weight: 700;
+    }
+
+    .sbl-qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 16px 0 18px;
+    }
+
+    .sbl-qty-ctrl {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 4px;
+      background: #1a1a1a;
+    }
+
+    .sbl-qty-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .sbl-qty-input {
+      width: 36px;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .sbl-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .sbl-btn-add {
+      width: 100%;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 6px;
+      padding: 14px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+
+    .sbl-btn-buy {
+      width: 100%;
+      background: #000000;
+      color: #ffffff;
+      border: 1.5px solid #ffffff;
+      border-radius: 6px;
+      padding: 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+
+    .sbl-trust-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 14px;
+      font-size: 0.74rem;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    /* Size Chart Modal */
+    .sbl-sizechart-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s;
+    }
+    .sbl-sizechart-modal.is-active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .sbl-sizechart-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+    }
+    .sbl-sizechart-dialog {
+      position: relative;
+      background: #121214;
+      color: #ffffff;
+      width: 100%;
+      max-width: 720px;
+      max-height: 88vh;
+      border-radius: 12px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+      z-index: 2;
+      padding: 28px 24px;
+      transform: scale(0.96) translateY(12px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sbl-sizechart-modal.is-active .sbl-sizechart-dialog {
+      transform: scale(1) translateY(0);
+    }
+    .sbl-sc-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sbl-sc-close:hover {
+      background: #ffffff;
+      color: #000000;
+    }
+    .sbl-sc-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #4ade80;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .sbl-sc-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 0 0 6px;
+      color: #ffffff;
+    }
+    .sbl-sc-subtitle {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.65);
+      margin: 0;
+    }
+    .sbl-sc-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 18px 0 14px;
+      flex-wrap: wrap;
+    }
+    .sbl-sc-tabs {
+      display: inline-flex;
+      background: #1c1c1f;
+      border-radius: 9999px;
+      padding: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .sbl-sc-tab-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.75);
+      padding: 7px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sbl-sc-tab-btn.is-active {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 700;
+    }
+    .sbl-sc-unit-toggle {
+      display: inline-flex;
+      background: #1c1c1f;
+      border-radius: 6px;
+      padding: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .sbl-sc-unit-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.65);
+      padding: 5px 11px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sbl-sc-unit-btn.is-active {
+      background: #ffffff;
+      color: #000000;
+    }
+    .sbl-sc-table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: #17171a;
+    }
+    .sbl-sc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      text-align: center;
+    }
+    .sbl-sc-table th, .sbl-sc-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    .sbl-sc-table th {
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: 700;
+      color: #ffffff;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+    }
+    .sbl-sc-table th:first-child, .sbl-sc-table td:first-child {
+      font-weight: 700;
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: #17171a;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sbl-sc-guide {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+    .sbl-sc-guide-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+    .sbl-sc-guide-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px 14px;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.4;
+    }
+    .sbl-sc-guide-list strong { color: #ffffff; }
+    .sbl-size-chart-link {
+      background: transparent;
+      border: none;
+      font-size: 0.78rem;
+      color: #a1a1aa;
+      text-decoration: underline;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .sbl-size-chart-link:hover { color: #ffffff; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Demo Control Navbar -->
+  <div class="demo-navbar">
+    <div class="demo-logo">DUCH</div>
+    <div class="demo-view-toggles">
+      <button type="button" class="demo-toggle-btn is-active" id="btnDesktop">Desktop (4 Cols)</button>
+      <button type="button" class="demo-toggle-btn" id="btnMobile">Mobile (2 Cols)</button>
+    </div>
+  </div>
+
+  <div class="device-shell" id="deviceShell">
+    <div class="shop-by-look-section" id="ShopByLook-preview">
+      <div class="sbl-container">
+        <!-- Header -->
+        <div class="sbl-header">
+          <h2 class="sbl-title">SHOP BY LOOK</h2>
+          <p class="sbl-subheading">Perfectly paired. Effortlessly styled.</p>
+          <div>
+            <span class="sbl-promo-badge">PAIR & SAVE ₹400 • FREE SHIPPING</span>
+          </div>
+        </div>
+
+        <!-- 4 Category Filter Tabs -->
+        <div class="sbl-tabs-wrapper">
+          <div class="sbl-tabs">
+            <button type="button" class="sbl-tab-btn is-active" data-cat="formals">Formals</button>
+            <button type="button" class="sbl-tab-btn" data-cat="casuals">Casuals</button>
+            <button type="button" class="sbl-tab-btn" data-cat="party">Party Looks</button>
+            <button type="button" class="sbl-tab-btn" data-cat="vacation">Vacation Looks</button>
+          </div>
+        </div>
+
+        <!-- Grid of Looks -->
+        <div class="sbl-grid" id="sblGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Container -->
+  <div id="modalContainer"></div>
+
+  <!-- Size Chart Modal (DUCH Official Sizing) -->
+  <div id="previewSizeChartModal" class="sbl-sizechart-modal" aria-hidden="true">
+    <div class="sbl-sizechart-backdrop" onclick="closeSizeChartModal()"></div>
+    <div class="sbl-sizechart-dialog">
+      <button type="button" class="sbl-sc-close" onclick="closeSizeChartModal()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <div class="sbl-sc-brand-row" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;">
+        <span style="font-family:serif; font-size:1.15rem; letter-spacing:0.28em; color:#c5a059; font-weight:700;">D U C H</span>
+        <span style="color:#c5a059; font-size:0.8rem;">✦</span>
+      </div>
+
+      <div class="sbl-sc-header" style="text-align:center; margin-bottom:12px;">
+        <h2 class="sbl-sc-title" id="scModalTitle" style="font-size:1.25rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin:4px 0; color:#fff;">MEN'S SLIM FIT SHIRT SIZE CHART</h2>
+        <p class="sbl-sc-subtitle" id="scModalSubtitle" style="font-size:0.78rem; color:rgba(255,255,255,0.6); margin:0;">All measurements are in inches.</p>
+      </div>
+
+      <div class="sbl-sc-controls">
+        <div class="sbl-sc-tabs">
+          <button type="button" class="sbl-sc-tab-btn is-active" id="scTabShirt" onclick="switchScType('shirt')">1. Shirt / Top</button>
+          <button type="button" class="sbl-sc-tab-btn" id="scTabPant" onclick="switchScType('pant')">2. Pant / Trouser</button>
+        </div>
+
+        <div class="sbl-sc-unit-toggle">
+          <button type="button" class="sbl-sc-unit-btn is-active" id="scUnitIn" onclick="switchScUnit('in')">INCHES (IN)</button>
+          <button type="button" class="sbl-sc-unit-btn" id="scUnitCm" onclick="switchScUnit('cm')">CENTIMETERS (CM)</button>
+        </div>
+      </div>
+
+      <!-- Shirt Panel (Official DUCH Slim Fit Shirt Chart) -->
+      <div id="scShirtPanel">
+        <div class="sbl-sc-table-wrap">
+          <table class="sbl-sc-table">
+            <thead>
+              <tr>
+                <th>SIZE</th>
+                <th>BRAND SIZE</th>
+                <th>CHEST</th>
+                <th>WAIST</th>
+                <th>LENGTH</th>
+                <th>SHOULDER</th>
+                <th>SLEEVES LENGTH</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>36</strong></td>
+                <td>36-S</td>
+                <td><span class="sc-val-in">38"</span><span class="sc-val-cm" style="display:none;">96.5 cm</span></td>
+                <td><span class="sc-val-in">37"</span><span class="sc-val-cm" style="display:none;">94.0 cm</span></td>
+                <td><span class="sc-val-in">27"</span><span class="sc-val-cm" style="display:none;">68.6 cm</span></td>
+                <td><span class="sc-val-in">16.5"</span><span class="sc-val-cm" style="display:none;">41.9 cm</span></td>
+                <td><span class="sc-val-in">24"</span><span class="sc-val-cm" style="display:none;">61.0 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>38</strong></td>
+                <td>38-M</td>
+                <td><span class="sc-val-in">40"</span><span class="sc-val-cm" style="display:none;">101.6 cm</span></td>
+                <td><span class="sc-val-in">39"</span><span class="sc-val-cm" style="display:none;">99.1 cm</span></td>
+                <td><span class="sc-val-in">27.5"</span><span class="sc-val-cm" style="display:none;">69.9 cm</span></td>
+                <td><span class="sc-val-in">17.5"</span><span class="sc-val-cm" style="display:none;">44.5 cm</span></td>
+                <td><span class="sc-val-in">24.5"</span><span class="sc-val-cm" style="display:none;">62.2 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>40</strong></td>
+                <td>40-L</td>
+                <td><span class="sc-val-in">42"</span><span class="sc-val-cm" style="display:none;">106.7 cm</span></td>
+                <td><span class="sc-val-in">41"</span><span class="sc-val-cm" style="display:none;">104.1 cm</span></td>
+                <td><span class="sc-val-in">28"</span><span class="sc-val-cm" style="display:none;">71.1 cm</span></td>
+                <td><span class="sc-val-in">18.5"</span><span class="sc-val-cm" style="display:none;">47.0 cm</span></td>
+                <td><span class="sc-val-in">25"</span><span class="sc-val-cm" style="display:none;">63.5 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>42</strong></td>
+                <td>42-XL</td>
+                <td><span class="sc-val-in">44"</span><span class="sc-val-cm" style="display:none;">111.8 cm</span></td>
+                <td><span class="sc-val-in">43"</span><span class="sc-val-cm" style="display:none;">109.2 cm</span></td>
+                <td><span class="sc-val-in">29"</span><span class="sc-val-cm" style="display:none;">73.7 cm</span></td>
+                <td><span class="sc-val-in">19.5"</span><span class="sc-val-cm" style="display:none;">49.5 cm</span></td>
+                <td><span class="sc-val-in">25.5"</span><span class="sc-val-cm" style="display:none;">64.8 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>44</strong></td>
+                <td>44-XXL</td>
+                <td><span class="sc-val-in">46"</span><span class="sc-val-cm" style="display:none;">116.8 cm</span></td>
+                <td><span class="sc-val-in">45"</span><span class="sc-val-cm" style="display:none;">114.3 cm</span></td>
+                <td><span class="sc-val-in">29.5"</span><span class="sc-val-cm" style="display:none;">74.9 cm</span></td>
+                <td><span class="sc-val-in">20"</span><span class="sc-val-cm" style="display:none;">50.8 cm</span></td>
+                <td><span class="sc-val-in">26"</span><span class="sc-val-cm" style="display:none;">66.0 cm</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sbl-sc-guide">
+          <div class="sbl-sc-guide-title">How To Measure Your Shirt</div>
+          <ul class="sbl-sc-guide-list">
+            <li><strong>Shoulder:</strong> Measure from edge of left shoulder seam straight across to right shoulder seam.</li>
+            <li><strong>Chest:</strong> Measure across the fullest part of your chest, keeping tape horizontal under arms.</li>
+            <li><strong>Waist:</strong> Measure across the narrowest part of the shirt waistline.</li>
+            <li><strong>Length:</strong> Measure from highest point of collar down to the bottom hem.</li>
+            <li><strong>Sleeves Length:</strong> Measure from top shoulder seam down along arm to sleeve cuff.</li>
+          </ul>
+        </div>
+
+        <div style="margin-top:14px; font-family:serif; font-size:1.8rem; font-style:italic; color:#c5a059; opacity:0.85; text-align:center;">D</div>
+      </div>
+
+      <!-- Pant Panel (Official DUCH Formal Trouser Chart) -->
+      <div id="scPantPanel" style="display:none;">
+        <div class="sbl-sc-table-wrap">
+          <table class="sbl-sc-table">
+            <thead>
+              <tr>
+                <th>SIZE</th>
+                <th>WAIST</th>
+                <th>HIP</th>
+                <th>IN-SEAM</th>
+                <th>OUT-SEAM</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>30</strong></td>
+                <td><span class="sc-val-in">31"</span><span class="sc-val-cm" style="display:none;">78.7 cm</span></td>
+                <td><span class="sc-val-in">40"</span><span class="sc-val-cm" style="display:none;">101.6 cm</span></td>
+                <td><span class="sc-val-in">30"</span><span class="sc-val-cm" style="display:none;">76.2 cm</span></td>
+                <td><span class="sc-val-in">38.5"</span><span class="sc-val-cm" style="display:none;">97.8 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>32</strong></td>
+                <td><span class="sc-val-in">33"</span><span class="sc-val-cm" style="display:none;">83.8 cm</span></td>
+                <td><span class="sc-val-in">42"</span><span class="sc-val-cm" style="display:none;">106.7 cm</span></td>
+                <td><span class="sc-val-in">30"</span><span class="sc-val-cm" style="display:none;">76.2 cm</span></td>
+                <td><span class="sc-val-in">38.5"</span><span class="sc-val-cm" style="display:none;">97.8 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>34</strong></td>
+                <td><span class="sc-val-in">35"</span><span class="sc-val-cm" style="display:none;">88.9 cm</span></td>
+                <td><span class="sc-val-in">44"</span><span class="sc-val-cm" style="display:none;">111.8 cm</span></td>
+                <td><span class="sc-val-in">30"</span><span class="sc-val-cm" style="display:none;">76.2 cm</span></td>
+                <td><span class="sc-val-in">38.5"</span><span class="sc-val-cm" style="display:none;">97.8 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>36</strong></td>
+                <td><span class="sc-val-in">37"</span><span class="sc-val-cm" style="display:none;">94.0 cm</span></td>
+                <td><span class="sc-val-in">46"</span><span class="sc-val-cm" style="display:none;">116.8 cm</span></td>
+                <td><span class="sc-val-in">30"</span><span class="sc-val-cm" style="display:none;">76.2 cm</span></td>
+                <td><span class="sc-val-in">38.5"</span><span class="sc-val-cm" style="display:none;">97.8 cm</span></td>
+              </tr>
+              <tr>
+                <td><strong>38</strong></td>
+                <td><span class="sc-val-in">39"</span><span class="sc-val-cm" style="display:none;">99.1 cm</span></td>
+                <td><span class="sc-val-in">48"</span><span class="sc-val-cm" style="display:none;">121.9 cm</span></td>
+                <td><span class="sc-val-in">30"</span><span class="sc-val-cm" style="display:none;">76.2 cm</span></td>
+                <td><span class="sc-val-in">38.5"</span><span class="sc-val-cm" style="display:none;">97.8 cm</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sbl-sc-guide">
+          <div class="sbl-sc-guide-title">How To Measure Your Trousers</div>
+          <ul class="sbl-sc-guide-list">
+            <li><strong>Waist:</strong> Measure around natural waistline where trouser waistband sits.</li>
+            <li><strong>Hip:</strong> Measure across fullest point of hips with heels together.</li>
+            <li><strong>In-Seam:</strong> Measure from crotch point down inside leg to bottom hem.</li>
+            <li><strong>Out-Seam:</strong> Measure from top edge of waistband down outer side to hem.</li>
+          </ul>
+        </div>
+
+        <div style="margin-top:14px; font-family:serif; font-size:1.8rem; font-style:italic; color:#c5a059; opacity:0.85; text-align:center;">D</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo Looks Data (16 looks across 4 categories)
+    const demoData = [
+      // 1. Formals
+      {
+        id: 'f1', category: 'formals', title: 'Maroon & Grey Gurkha',
+        price: '₹2,398', compare: '₹2,798', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'f2', category: 'formals', title: 'Men Charcoal Abstract & Gurkha',
+        price: '₹2,398', compare: '₹2,798', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'f3', category: 'formals', title: 'Classic Navy Slim & Stone',
+        price: '₹2,398', compare: '₹2,798', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'f4', category: 'formals', title: 'Emerald Luxe & Pleated Khaki',
+        price: '₹2,398', compare: '₹2,798', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+
+      // 2. Casuals
+      {
+        id: 'c1', category: 'casuals', title: 'Olive Oversized & Relaxed Chino',
+        price: '₹2,198', compare: '₹2,598', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'c2', category: 'casuals', title: 'Heavyweight Sand & Washed Denim',
+        price: '₹2,198', compare: '₹2,598', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'c3', category: 'casuals', title: 'Mocca Knit Polo & Off-White Pant',
+        price: '₹2,198', compare: '₹2,598', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'c4', category: 'casuals', title: 'Striped Cuban & Charcoal Trousers',
+        price: '₹2,198', compare: '₹2,598', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+
+      // 3. Party Looks
+      {
+        id: 'p1', category: 'party', title: 'Silk Black Textured & Gurkha',
+        price: '₹2,598', compare: '₹2,998', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'p2', category: 'party', title: 'Wine Velvet Collar & Gloss Pant',
+        price: '₹2,598', compare: '₹2,998', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'p3', category: 'party', title: 'Silver Shimmer & Jet Black Slim',
+        price: '₹2,598', compare: '₹2,998', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'p4', category: 'party', title: 'Midnight Jacquard & Tux Trousers',
+        price: '₹2,598', compare: '₹2,998', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1496345875659-11f7dd282d1d?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+
+      // 4. Vacation Looks
+      {
+        id: 'v1', category: 'vacation', title: 'Resort Floral Silk & Linen Pant',
+        price: '₹2,298', compare: '₹2,698', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'v2', category: 'vacation', title: 'Breeze White Camp & Striped Short',
+        price: '₹2,298', compare: '₹2,698', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'v3', category: 'vacation', title: 'Sage Green Linen & Sand Chino',
+        price: '₹2,298', compare: '₹2,698', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      },
+      {
+        id: 'v4', category: 'vacation', title: 'Terracotta Sun Shirt & Cream Pant',
+        price: '₹2,298', compare: '₹2,698', save: 'SAVE ₹400',
+        photos: [
+          'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80'
+        ]
+      }
+    ];
+
+    const gridEl = document.getElementById('sblGrid');
+    const modalContainerEl = document.getElementById('modalContainer');
+
+    // Render Grid Cards & Modals
+    demoData.forEach((item, idx) => {
+      // 1. Grid Card
+      const card = document.createElement('div');
+      card.className = 'sbl-card';
+      card.dataset.category = item.category;
+      card.dataset.id = item.id;
+      card.innerHTML = `
+        <div class="sbl-card-media" onclick="openLookModal('${item.id}')">
+          <img src="${item.photos[0]}" alt="${item.title}" class="sbl-card-img" loading="lazy">
+          <div class="sbl-photos-badge">📷 6 Photos</div>
+        </div>
+        <div class="sbl-card-details">
+          <h3 class="sbl-card-title" onclick="openLookModal('${item.id}')">${item.title}</h3>
+          <div class="sbl-price-row">
+            <span class="sbl-price-current">${item.price}</span>
+            <span class="sbl-price-compare">${item.compare}</span>
+            <span class="sbl-price-save">${item.save}</span>
+          </div>
+          <button type="button" class="sbl-btn-shop" onclick="openLookModal('${item.id}')">
+            SHOP THE LOOK
+          </button>
+        </div>
+      `;
+      gridEl.appendChild(card);
+
+      // 2. Look Modal
+      const modal = document.createElement('div');
+      modal.className = 'sbl-modal';
+      modal.id = `modal-${item.id}`;
+      modal.innerHTML = `
+        <div class="sbl-modal-backdrop" onclick="closeLookModal('${item.id}')"></div>
+        <div class="sbl-modal-dialog">
+          <button type="button" class="sbl-modal-close" onclick="closeLookModal('${item.id}')">✕</button>
+          <div class="sbl-modal-grid">
+            <!-- Left: 6 Photos Carousel -->
+            <div class="sbl-gallery-wrap">
+              <div class="sbl-gallery-stage" id="stage-${item.id}">
+                ${item.photos.map((p, pIdx) => `
+                  <div class="sbl-slide ${pIdx === 0 ? 'is-active' : ''}" data-idx="${pIdx}">
+                    <img src="${p}" alt="${item.title}" class="sbl-slide-img">
+                  </div>
+                `).join('')}
+                <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--prev" onclick="changeSlide('${item.id}', -1)">‹</button>
+                <button type="button" class="sbl-gallery-arrow sbl-gallery-arrow--next" onclick="changeSlide('${item.id}', 1)">›</button>
+              </div>
+              <div class="sbl-gallery-thumbs" id="thumbs-${item.id}">
+                ${item.photos.map((p, pIdx) => `
+                  <button type="button" class="sbl-thumb-btn ${pIdx === 0 ? 'is-active' : ''}" onclick="goToSlide('${item.id}', ${pIdx})">
+                    <img src="${p}" class="sbl-thumb-img">
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Right: Details, Sizes, Add to Cart -->
+            <div class="sbl-details-wrap">
+              <span class="sbl-modal-badge">${item.category.toUpperCase()} • 2-PIECE LOOK</span>
+              <h2 class="sbl-modal-title">${item.title}</h2>
+              <div class="sbl-modal-pricing">
+                <span class="sbl-modal-price">${item.price}</span>
+                <span class="sbl-modal-compare">${item.compare}</span>
+                <span class="sbl-modal-save">${item.save}</span>
+              </div>
+              <div class="sbl-discount-banner">
+                ⚡ <strong>${item.save} Applied</strong> + Free Express Shipping!
+              </div>
+
+              <!-- Shirt Size Box -->
+              <div class="sbl-piece-box">
+                <div class="sbl-piece-header">
+                  <span class="sbl-piece-name">1. Shirt Size</span>
+                  <button type="button" class="sbl-size-chart-link" onclick="openSizeChartModal('shirt')">Size chart</button>
+                </div>
+                <div class="sbl-size-pills">
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">38</button>
+                  <button type="button" class="sbl-size-pill is-selected" onclick="selectPill(this)">40</button>
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">42</button>
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">44</button>
+                </div>
+              </div>
+
+              <!-- Pant Size Box -->
+              <div class="sbl-piece-box">
+                <div class="sbl-piece-header">
+                  <span class="sbl-piece-name">2. Pant / Trouser Size</span>
+                  <button type="button" class="sbl-size-chart-link" onclick="openSizeChartModal('pant')">Size chart</button>
+                </div>
+                <div class="sbl-size-pills">
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">30</button>
+                  <button type="button" class="sbl-size-pill is-selected" onclick="selectPill(this)">32</button>
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">34</button>
+                  <button type="button" class="sbl-size-pill" onclick="selectPill(this)">36</button>
+                </div>
+              </div>
+
+              <!-- Quantity -->
+              <div class="sbl-qty-row">
+                <span class="sbl-qty-label">Quantity:</span>
+                <div class="sbl-qty-ctrl">
+                  <button type="button" class="sbl-qty-btn" onclick="alterQty('${item.id}', -1)">−</button>
+                  <input type="text" class="sbl-qty-input" id="qty-${item.id}" value="1" readonly>
+                  <button type="button" class="sbl-qty-btn" onclick="alterQty('${item.id}', 1)">+</button>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="sbl-actions">
+                <button type="button" class="sbl-btn-add" onclick="demoAddToCart('${item.title}', '${item.id}')">
+                  ADD TO CART
+                </button>
+                <button type="button" class="sbl-btn-buy" onclick="demoBuyNow('${item.title}')">
+                  BUY IT NOW
+                </button>
+              </div>
+
+              <div class="sbl-trust-badges">
+                <span>✓ Free Express Shipping</span>
+                <span>✓ 7-Day Easy Exchange</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      modalContainerEl.appendChild(modal);
+
+      // Touch swipe on gallery stage
+      const stage = modal.querySelector(`#stage-${item.id}`);
+      let startX = 0, startY = 0;
+      stage.addEventListener('touchstart', (e) => {
+        startX = e.changedTouches[0].clientX;
+        startY = e.changedTouches[0].clientY;
+      }, { passive: true });
+      stage.addEventListener('touchend', (e) => {
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+        if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX > 0) changeSlide(item.id, 1);
+          else changeSlide(item.id, -1);
+        }
+      }, { passive: true });
+    });
+
+    // 4 Category Tabs Filtering
+    const tabBtns = document.querySelectorAll('.sbl-tab-btn');
+    function filterTab(category) {
+      document.querySelectorAll('.sbl-card').forEach(card => {
+        const match = card.dataset.category === category;
+        card.classList.toggle('is-hidden', !match);
+      });
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        if (window.innerWidth <= 768 || document.getElementById('deviceShell').classList.contains('mobile-view')) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        filterTab(btn.dataset.cat);
+      });
+    });
+
+    // Default to Formals
+    filterTab('formals');
+
+    // Modal Functions
+    function openLookModal(id) {
+      const modal = document.getElementById(`modal-${id}`);
+      if (modal) {
+        modal.classList.add('is-active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeLookModal(id) {
+      const modal = document.getElementById(`modal-${id}`);
+      if (modal) {
+        modal.classList.remove('is-active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Slide Carousel Functions
+    function goToSlide(lookId, slideIdx) {
+      const modal = document.getElementById(`modal-${lookId}`);
+      const slides = modal.querySelectorAll('.sbl-slide');
+      const thumbs = modal.querySelectorAll('.sbl-thumb-btn');
+
+      slides.forEach((s, i) => s.classList.toggle('is-active', i === slideIdx));
+      thumbs.forEach((t, i) => t.classList.toggle('is-active', i === slideIdx));
+    }
+
+    function changeSlide(lookId, dir) {
+      const modal = document.getElementById(`modal-${lookId}`);
+      const slides = Array.from(modal.querySelectorAll('.sbl-slide'));
+      let cur = slides.findIndex(s => s.classList.contains('is-active'));
+      let next = (cur + dir + slides.length) % slides.length;
+      goToSlide(lookId, next);
+    }
+
+    function selectPill(btn) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('.sbl-size-pill').forEach(p => p.classList.remove('is-selected'));
+      btn.classList.add('is-selected');
+    }
+
+    function alterQty(lookId, delta) {
+      const input = document.getElementById(`qty-${lookId}`);
+      let val = parseInt(input.value, 10) || 1;
+      val += delta;
+      if (val < 1) val = 1;
+      input.value = val;
+    }
+
+    function demoAddToCart(title, id) {
+      const modal = document.getElementById(`modal-${id}`);
+      const btn = modal.querySelector('.sbl-btn-add');
+      const orig = btn.textContent;
+      btn.textContent = 'Adding to Bag...';
+      setTimeout(() => {
+        btn.textContent = '✓ Added Both Pieces to Cart!';
+        setTimeout(() => {
+          btn.textContent = orig;
+          closeLookModal(id);
+          alert(`Success! Added 2-piece set "${title}" (Shirt + Pant) to cart with ₹400 discount.`);
+        }, 600);
+      }, 500);
+    }
+
+    function demoBuyNow(title) {
+      alert(`Proceeding to instant checkout for "${title}" (2-Piece Set) with ₹400 off!`);
+    }
+
+    // Size Chart Modal Management in Preview
+    const scModal = document.getElementById('previewSizeChartModal');
+    const scTitle = document.getElementById('scModalTitle');
+    const scTabShirt = document.getElementById('scTabShirt');
+    const scTabPant = document.getElementById('scTabPant');
+    const scUnitIn = document.getElementById('scUnitIn');
+    const scUnitCm = document.getElementById('scUnitCm');
+    const scShirtPanel = document.getElementById('scShirtPanel');
+    const scPantPanel = document.getElementById('scPantPanel');
+
+    function openSizeChartModal(type) {
+      if (!scModal) return;
+      switchScType(type || 'shirt');
+      scModal.classList.add('is-active');
+      scModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSizeChartModal() {
+      if (!scModal) return;
+      scModal.classList.remove('is-active');
+      scModal.setAttribute('aria-hidden', 'true');
+    }
+
+    const scSubtitle = document.getElementById('scModalSubtitle');
+    function switchScType(type) {
+      if (type === 'shirt') {
+        scTabShirt.classList.add('is-active');
+        scTabPant.classList.remove('is-active');
+        scShirtPanel.style.display = 'block';
+        scPantPanel.style.display = 'none';
+        scTitle.textContent = "MEN'S SLIM FIT SHIRT SIZE CHART";
+      } else {
+        scTabPant.classList.add('is-active');
+        scTabShirt.classList.remove('is-active');
+        scShirtPanel.style.display = 'none';
+        scPantPanel.style.display = 'block';
+        scTitle.textContent = 'FORMAL TROUSER SIZE CHART';
+      }
+      if (scSubtitle) {
+        const isCm = scUnitCm.classList.contains('is-active');
+        scSubtitle.textContent = isCm ? 'All measurements are in centimeters.' : 'All measurements are in inches.';
+      }
+    }
+
+    function switchScUnit(unit) {
+      if (unit === 'in') {
+        scUnitIn.classList.add('is-active');
+        scUnitCm.classList.remove('is-active');
+        scModal.querySelectorAll('.sc-val-in').forEach(el => el.style.display = '');
+        scModal.querySelectorAll('.sc-val-cm').forEach(el => el.style.display = 'none');
+        if (scSubtitle) scSubtitle.textContent = 'All measurements are in inches.';
+      } else {
+        scUnitCm.classList.add('is-active');
+        scUnitIn.classList.remove('is-active');
+        scModal.querySelectorAll('.sc-val-in').forEach(el => el.style.display = 'none');
+        scModal.querySelectorAll('.sc-val-cm').forEach(el => el.style.display = '');
+        if (scSubtitle) scSubtitle.textContent = 'All measurements are in centimeters.';
+      }
+    }
+
+    // Toggle Desktop / Mobile View in Preview
+    const shell = document.getElementById('deviceShell');
+    document.getElementById('btnDesktop').addEventListener('click', function() {
+      this.classList.add('is-active');
+      document.getElementById('btnMobile').classList.remove('is-active');
+      shell.classList.remove('mobile-view');
+    });
+
+    document.getElementById('btnMobile').addEventListener('click', function() {
+      this.classList.add('is-active');
+      document.getElementById('btnDesktop').classList.remove('is-active');
+      shell.classList.add('mobile-view');
+    });
+  </script>
+</body>
+</html>
