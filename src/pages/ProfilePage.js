@@ -13,9 +13,10 @@ import { escapeHtml } from '../utils/dom.js';
 export function renderProfilePage(container, navigate, query) {
   const profileId = query.get('id') || 'raajkumar';
   const rawProfile = getProfileData(profileId);
+  let currentUser = getCurrentUser();
 
   function getComputedProfile() {
-    const currentUser = getCurrentUser();
+    currentUser = getCurrentUser();
     const activeShopper =
       currentUser?.shopperAccounts?.find((a) => a.id === (query.get('id') || currentUser.activeAccountId)) ||
       currentUser?.shopperAccounts?.[0];
@@ -60,6 +61,7 @@ export function renderProfilePage(container, navigate, query) {
   let mediaSubTab = 'video'; // 'video' | 'photo'
 
   function render() {
+    currentUser = getCurrentUser();
     profile = getComputedProfile();
     // Dynamic refresh of loved stores and affiliated items from localStorage
     profile.lovedStores = getLovedStores();
