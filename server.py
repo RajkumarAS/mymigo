@@ -427,6 +427,8 @@ def load_users() -> List[Dict[str, Any]]:
                             "preferences": r.get("preferences"),
                             "email": r.get("email"),
                             "phone": r.get("phone"),
+                            "mobile": r.get("phone"),
+                            "city": r.get("city", ""),
                             "role": r.get("role", "shopper"),
                             "connectionsCount": r.get("connections_count", 140),
                             "status": r.get("status", "active"),
@@ -1191,12 +1193,15 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                 timestamp = int(datetime.datetime.now().timestamp())
                 user_id = f"usr-{timestamp}"
 
+            phone_num = str(payload.get("phone") or payload.get("mobile", "")).strip()
+
             user_entry = {
                 "id": user_id,
                 "name": str(payload.get("name", "New Shopper")).strip(),
                 "handle": str(payload.get("handle", "")).strip(),
                 "email": str(payload.get("email", "")).strip(),
-                "phone": str(payload.get("phone", "")).strip(),
+                "phone": phone_num,
+                "mobile": phone_num,
                 "city": str(payload.get("city", "")).strip(),
                 "avatar": str(payload.get("avatar", "")).strip() or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
                 "interests": str(payload.get("interests", "")).strip(),
@@ -1210,6 +1215,10 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             found = False
             for idx, u in enumerate(users):
                 if str(u.get("id")) == user_id:
+                    # Preserve existing phone/mobile if not passed in this edit request
+                    if not user_entry["phone"] and (u.get("phone") or u.get("mobile")):
+                        user_entry["phone"] = u.get("phone") or u.get("mobile")
+                        user_entry["mobile"] = user_entry["phone"]
                     users[idx] = {**u, **user_entry}
                     found = True
                     break

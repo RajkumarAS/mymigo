@@ -92,7 +92,7 @@ function normalizeUserAccounts(user) {
 
 export function loginUser(userData) {
   const existing = getCurrentUser() || {};
-  const mobile = userData.mobile || existing.mobile || '9206955756';
+  const mobile = userData.mobile || userData.phone || existing.mobile || existing.phone || '9206955756';
 
   let shopperAccounts = existing.shopperAccounts || [];
   let sellerAccounts = existing.sellerAccounts || [];
@@ -100,18 +100,42 @@ export function loginUser(userData) {
   if (shopperAccounts.length === 0) {
     shopperAccounts = [
       {
-        id: 'shopper-1',
+        id: userData.id || 'shopper-1',
         name: userData.customerAccount?.name || userData.name || 'Ananya Sundaram',
         city: userData.customerAccount?.city || userData.city || 'Coimbatore',
         avatar: userData.customerAccount?.avatar || userData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
         mobile,
+        phone: mobile,
         email: userData.email || 'ananya.sundaram@example.com',
-        connectionsCount: 248,
+        connectionsCount: userData.connectionsCount || 248,
         role: 'customer',
-        handle: '@ananya_shopper',
+        handle: userData.handle || '@ananya_shopper',
+        interests: userData.interests || userData.preferences || '',
+        preferences: userData.preferences || userData.interests || '',
         subtitle: 'Shopper Account • 248 Connections',
       },
     ];
+  } else if (!userData.sellerAccount && !userData.storeId && (userData.role === 'customer' || userData.role === 'shopper' || !userData.role)) {
+    // Update active shopper account with new avatar, name, handle, interests, and mobile/phone
+    const targetId = userData.id || existing.activeAccountId || shopperAccounts[0].id;
+    const idx = shopperAccounts.findIndex((a) => a.id === targetId);
+    const base = idx >= 0 ? shopperAccounts[idx] : shopperAccounts[0];
+    const updatedShopper = {
+      ...base,
+      ...userData,
+      avatar: userData.avatar || base.avatar,
+      name: userData.name || base.name,
+      handle: userData.handle || base.handle,
+      interests: userData.interests || userData.preferences || base.interests || '',
+      preferences: userData.preferences || userData.interests || base.preferences || '',
+      mobile,
+      phone: mobile,
+    };
+    if (idx >= 0) {
+      shopperAccounts[idx] = updatedShopper;
+    } else {
+      shopperAccounts.push(updatedShopper);
+    }
   }
 
   if (sellerAccounts.length === 0) {
@@ -130,36 +154,63 @@ export function loginUser(userData) {
         description: 'Pure cotton sarees, breathable handloom weaves, and everyday traditional collections curated directly from weavers.',
       },
     ];
+  } else if (userData.role === 'seller' || userData.storeName || userData.storeId) {
+    const targetId = userData.id || userData.storeId || existing.activeAccountId || sellerAccounts[0].id;
+    const idx = sellerAccounts.findIndex((s) => s.id === targetId || s.storeId === targetId);
+    if (idx >= 0) {
+      sellerAccounts[idx] = {
+        ...sellerAccounts[idx],
+        ...userData,
+        avatar: userData.avatar || userData.image || sellerAccounts[idx].avatar,
+        image: userData.image || userData.avatar || sellerAccounts[idx].image,
+        storeName: userData.storeName || userData.name || sellerAccounts[idx].storeName,
+        name: userData.storeName || userData.name || sellerAccounts[idx].name,
+        handle: userData.handle || sellerAccounts[idx].handle,
+        category: userData.category || sellerAccounts[idx].category,
+        description: userData.description || sellerAccounts[idx].description,
+        city: userData.city || sellerAccounts[idx].city,
+        mobile,
+        phone: mobile,
+      };
+    }
   }
 
   const activeRole = userData.activeRole || existing.activeRole || 'customer';
   const activeAccountId =
-    activeRole === 'seller' ? sellerAccounts[0].id : shopperAccounts[0].id;
+    activeRole === 'seller'
+      ? (sellerAccounts[0]?.id || '')
+      : (userData.id || existing.activeAccountId || shopperAccounts[0]?.id || '');
   const activeAccount =
-    activeRole === 'seller' ? sellerAccounts[0] : shopperAccounts[0];
+    activeRole === 'seller'
+      ? (sellerAccounts.find((a) => a.id === activeAccountId) || sellerAccounts[0])
+      : (shopperAccounts.find((a) => a.id === activeAccountId) || shopperAccounts[0]);
 
   const payload = {
     loggedIn: true,
-    id: activeAccount.id,
+    id: activeAccount?.id || 'shopper-1',
     mobile,
+    phone: mobile,
     email: userData.email || existing.email || '',
     activeAccountId,
     activeRole,
     hasCustomerAccount: shopperAccounts.length > 0,
     hasSellerAccount: sellerAccounts.length > 0,
-    name: activeAccount.name,
-    avatar: activeAccount.avatar,
-    city: activeAccount.city,
+    name: activeAccount?.name || 'Shopper',
+    avatar: activeAccount?.avatar || userData.avatar || existing.avatar,
+    handle: activeAccount?.handle || userData.handle || existing.handle,
+    interests: activeAccount?.interests || userData.interests || '',
+    preferences: activeAccount?.preferences || userData.preferences || '',
+    city: activeAccount?.city || 'Coimbatore',
     shopperAccounts,
     sellerAccounts,
     customerAccount: shopperAccounts[0],
     sellerAccount: sellerAccounts[0],
-    loginMethod: userData.method || 'mobile_otp',
+    loginMethod: userData.method || existing.loginMethod || 'mobile_otp',
     loginTime: new Date().toISOString(),
   };
 
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(payload));
-  if (activeRole === 'seller') {
+  if (activeRole === 'seller' && sellerAccounts[0]?.storeId) {
     localStorage.setItem(`mymigo_seller_mode_${sellerAccounts[0].storeId}`, 'true');
   }
 
@@ -1581,6 +1632,7 @@ export function openAuthModal(onStateChange, navigate, forceLogin = false) {
         avatar,
         preferences: allInterests,
         interests: allInterests,
+        phone: enteredMobile || '9206955756',
         mobile: enteredMobile || '9206955756',
         email: enteredEmail || '',
         connectionsCount: 1,
@@ -1655,6 +1707,7 @@ export function openAuthModal(onStateChange, navigate, forceLogin = false) {
         image: avatar,
         category,
         description: desc,
+        phone: enteredMobile || '9206955756',
         mobile: enteredMobile || '9206955756',
         email: enteredEmail || '',
         role: 'seller',
@@ -1687,6 +1740,7 @@ export function openAuthModal(onStateChange, navigate, forceLogin = false) {
         name: newSeller.name,
         handle: newSeller.handle,
         avatar: newSeller.avatar,
+        phone: newSeller.mobile,
         mobile: newSeller.mobile,
         email: newSeller.email,
         activeRole: 'seller',

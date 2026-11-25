@@ -13,24 +13,23 @@ import { escapeHtml } from '../utils/dom.js';
 export function renderProfilePage(container, navigate, query) {
   const profileId = query.get('id') || 'raajkumar';
   const rawProfile = getProfileData(profileId);
-  const currentUser = getCurrentUser();
 
-  // If logged in user matches or viewing self, merge user profile updates
-  const activeShopper =
-    currentUser?.shopperAccounts?.find((a) => a.id === (query.get('id') || currentUser.activeAccountId)) ||
-    currentUser?.shopperAccounts?.[0];
+  function getComputedProfile() {
+    const currentUser = getCurrentUser();
+    const activeShopper =
+      currentUser?.shopperAccounts?.find((a) => a.id === (query.get('id') || currentUser.activeAccountId)) ||
+      currentUser?.shopperAccounts?.[0];
 
-  const isSelf = Boolean(
-    currentUser &&
-      (!query.get('id') ||
-        query.get('id') === currentUser.id ||
-        query.get('id') === currentUser.activeAccountId ||
-        currentUser.shopperAccounts?.some((a) => a.id === query.get('id')) ||
-        profileId === 'raajkumar')
-  );
+    const isSelf = Boolean(
+      currentUser &&
+        (!query.get('id') ||
+          query.get('id') === currentUser.id ||
+          query.get('id') === currentUser.activeAccountId ||
+          currentUser.shopperAccounts?.some((a) => a.id === query.get('id')) ||
+          profileId === 'raajkumar')
+    );
 
-  const profile =
-    isSelf && currentUser
+    return isSelf && currentUser
       ? {
           ...rawProfile,
           ...currentUser,
@@ -38,6 +37,8 @@ export function renderProfilePage(container, navigate, query) {
           avatar: activeShopper?.avatar || currentUser.avatar || rawProfile.avatar,
           name: activeShopper?.name || currentUser.name || rawProfile.name,
           city: activeShopper?.city || currentUser.city || rawProfile.city,
+          phone: activeShopper?.phone || activeShopper?.mobile || currentUser.phone || currentUser.mobile || rawProfile.phone,
+          mobile: activeShopper?.mobile || activeShopper?.phone || currentUser.mobile || currentUser.phone || rawProfile.phone,
           handle:
             activeShopper?.handle ||
             currentUser?.handle ||
@@ -50,12 +51,16 @@ export function renderProfilePage(container, navigate, query) {
             rawProfile.shoppingInterest,
         }
       : rawProfile;
+  }
+
+  let profile = getComputedProfile();
 
   // Active section view: 'media', 'loved-stores', or 'affiliated-items'
   let activeTab = query.get('tab') || 'media'; // 'media' | 'loved-stores' | 'affiliated-items'
   let mediaSubTab = 'video'; // 'video' | 'photo'
 
   function render() {
+    profile = getComputedProfile();
     // Dynamic refresh of loved stores and affiliated items from localStorage
     profile.lovedStores = getLovedStores();
     profile.affiliatedItems = getAffiliatedItems();
@@ -1311,11 +1316,14 @@ export function renderProfilePage(container, navigate, query) {
       let updatedHandle = modalEl.querySelector('#shopper-handle')?.value.trim() || profile.handle || '';
       if (updatedHandle && !updatedHandle.startsWith('@')) updatedHandle = `@${updatedHandle}`;
 
+      const currentUser = getCurrentUser();
       const userPayload = {
         id: profile.id || 'usr-shopper',
         name: modalEl.querySelector('#shopper-name')?.value.trim() || profile.name || 'Shopper',
         handle: updatedHandle,
         email: modalEl.querySelector('#shopper-email')?.value.trim() || '',
+        phone: profile.phone || profile.mobile || currentUser?.phone || currentUser?.mobile || '',
+        mobile: profile.mobile || profile.phone || currentUser?.mobile || currentUser?.phone || '',
         interests: modalEl.querySelector('#shopper-preferences')?.value.trim() || '',
         preferences: modalEl.querySelector('#shopper-preferences')?.value.trim() || '',
         avatar: currentAvatar,
@@ -1326,6 +1334,7 @@ export function renderProfilePage(container, navigate, query) {
       try {
         await saveUser(userPayload);
         loginUser(userPayload);
+        profile = getComputedProfile();
         showProfileToast('Profile updated successfully!', true);
         closeModal();
         render();

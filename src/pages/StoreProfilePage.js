@@ -22,6 +22,7 @@ import {
 import { getCurrentUser, openAccountSwitcherBottomSheet } from '../components/AuthModal.js';
 import { isStoreLoved, toggleLovedStore } from '../services/lovedStoresService.js';
 import { isItemAffiliated, toggleAffiliatedItem } from '../services/affiliatedItemsService.js';
+import { uploadMediaFile } from '../services/profileService.js';
 import { escapeHtml } from '../utils/dom.js';
 
 export async function renderStoreProfilePage(container, storeId, navigate) {
@@ -1195,17 +1196,25 @@ function openEditProfileModal(profileData, onSave) {
   const urlInput = modal.querySelector('#edit-avatar-url');
   const previewImg = modal.querySelector('#avatar-preview-img');
 
-  fileInput?.addEventListener('change', () => {
+  fileInput?.addEventListener('change', async () => {
     const file = fileInput.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        currentAvatar = reader.result;
+    if (!file) return;
+    try {
+      const res = await uploadMediaFile(file);
+      if (res && res.url) {
+        currentAvatar = res.url;
         if (previewImg) previewImg.src = currentAvatar;
-        if (urlInput) urlInput.value = '';
-      };
-      reader.readAsDataURL(file);
-    }
+        if (urlInput) urlInput.value = currentAvatar;
+        return;
+      }
+    } catch {}
+    const reader = new FileReader();
+    reader.onload = () => {
+      currentAvatar = reader.result;
+      if (previewImg) previewImg.src = currentAvatar;
+      if (urlInput) urlInput.value = '';
+    };
+    reader.readAsDataURL(file);
   });
 
   urlInput?.addEventListener('input', () => {
