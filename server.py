@@ -229,15 +229,15 @@ def save_homepage_config(payload: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
-def sync_user_to_supabase(user_entry: Dict[str, Any], delete: bool = False) -> bool:
+def sync_user_to_supabase(user_entry: Dict[str, Any], delete: bool = False) -> Tuple[bool, str]:
     """Sync a user record to Supabase public.users if credentials exist."""
     supabase_url, supabase_key = get_supabase_credentials()
     if not (supabase_url and supabase_key):
-        return False
+        return False, "Supabase credentials not configured"
 
     user_id = str(user_entry.get("id", "")).strip()
     if not user_id:
-        return False
+        return False, "Missing user id"
 
     headers = {
         "apikey": supabase_key,
@@ -250,7 +250,7 @@ def sync_user_to_supabase(user_entry: Dict[str, Any], delete: bool = False) -> b
         url = f"{supabase_url}/rest/v1/users?id=eq.{urllib.parse.quote(user_id)}"
         req = urllib.request.Request(url, headers=headers, method="DELETE")
     else:
-        url = f"{supabase_url}/rest/v1/users"
+        url = f"{supabase_url}/rest/v1/users?on_conflict=id"
         headers["Prefer"] = "resolution=merge-duplicates"
         row = {
             "id": user_id,
@@ -269,22 +269,31 @@ def sync_user_to_supabase(user_entry: Dict[str, Any], delete: bool = False) -> b
         req = urllib.request.Request(url, data=body, headers=headers, method="POST")
 
     try:
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            return resp.status in (200, 201, 204)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return True, f"HTTP {resp.status}"
+    except urllib.error.HTTPError as e:
+        err_msg = ""
+        try:
+            err_msg = e.read().decode("utf-8")
+        except Exception:
+            pass
+        msg = f"HTTP {e.code}: {err_msg}"
+        print(f"[Supabase sync user warning] {user_id}: {msg}")
+        return False, msg
     except Exception as e:
         print(f"[Supabase sync user warning] {user_id}: {e}")
-        return False
+        return False, str(e)
 
 
-def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) -> bool:
+def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) -> Tuple[bool, str]:
     """Sync a seller record to Supabase public.sellers if credentials exist."""
     supabase_url, supabase_key = get_supabase_credentials()
     if not (supabase_url and supabase_key):
-        return False
+        return False, "Supabase credentials not configured"
 
     seller_id = str(seller_entry.get("id", "")).strip()
     if not seller_id:
-        return False
+        return False, "Missing seller id"
 
     headers = {
         "apikey": supabase_key,
@@ -297,7 +306,7 @@ def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) 
         url = f"{supabase_url}/rest/v1/sellers?id=eq.{urllib.parse.quote(seller_id)}"
         req = urllib.request.Request(url, headers=headers, method="DELETE")
     else:
-        url = f"{supabase_url}/rest/v1/sellers"
+        url = f"{supabase_url}/rest/v1/sellers?on_conflict=id"
         headers["Prefer"] = "resolution=merge-duplicates"
         row = {
             "id": seller_id,
@@ -316,34 +325,75 @@ def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) 
         req = urllib.request.Request(url, data=body, headers=headers, method="POST")
 
     try:
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            return resp.status in (200, 201, 204)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return True, f"HTTP {resp.status}"
+    except urllib.error.HTTPError as e:
+        err_msg = ""
+        try:
+            err_msg = e.read().decode("utf-8")
+        except Exception:
+            pass
+        msg = f"HTTP {e.code}: {err_msg}"
+        print(f"[Supabase sync seller warning] {seller_id}: {msg}")
+        return False, msg
     except Exception as e:
         print(f"[Supabase sync seller warning] {seller_id}: {e}")
-        return False
+        return False, str(e)
 
 
-def sync_local_data_to_supabase() -> None:
-    """Ensure all local users and sellers are synced into Supabase."""
+def sync_local_data_to_supabase() -> Dict[str, Any]:
+    """Ensure all local users and sellers are synced into Supabase and return diagnostic report."""
     supabase_url, supabase_key = get_supabase_credentials()
     if not (supabase_url and supabase_key):
-        return
+        return {
+            "ok": False,
+            "supabaseConfigured": False,
+            "message": "Supabase credentials are not configured.",
+        }
+
+    masked_url = (
+        supabase_url[:15] + "..." + supabase_url[-8:]
+        if len(supabase_url) > 25
+        else supabase_url
+    )
+
+    report: Dict[str, Any] = {
+        "ok": True,
+        "supabaseConfigured": True,
+        "supabaseUrl": masked_url,
+        "usersSynced": 0,
+        "sellersSynced": 0,
+        "errors": [],
+    }
 
     try:
         if USERS_FILE.is_file():
             users = json.loads(USERS_FILE.read_text(encoding="utf-8"))
             for u in users:
-                sync_user_to_supabase(u)
+                ok, msg = sync_user_to_supabase(u)
+                if ok:
+                    report["usersSynced"] += 1
+                else:
+                    report["errors"].append({"type": "user", "id": u.get("id"), "error": msg})
     except Exception as e:
-        print(f"[Supabase init users sync notice]: {e}")
+        report["errors"].append({"type": "users_batch", "error": str(e)})
 
     try:
         if SELLERS_FILE.is_file():
             sellers = json.loads(SELLERS_FILE.read_text(encoding="utf-8"))
             for s in sellers:
-                sync_seller_to_supabase(s)
+                ok, msg = sync_seller_to_supabase(s)
+                if ok:
+                    report["sellersSynced"] += 1
+                else:
+                    report["errors"].append({"type": "seller", "id": s.get("id"), "error": msg})
     except Exception as e:
-        print(f"[Supabase init sellers sync notice]: {e}")
+        report["errors"].append({"type": "sellers_batch", "error": str(e)})
+
+    if report["errors"]:
+        report["ok"] = False
+
+    return report
 
 
 def load_users() -> List[Dict[str, Any]]:
@@ -907,8 +957,9 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if parsed.path == "/api/sync-supabase":
-            sync_local_data_to_supabase()
-            self.send_json(200, {"ok": True, "message": "Supabase sync triggered successfully."})
+            report = sync_local_data_to_supabase()
+            status_code = 200 if report.get("ok") else 207
+            self.send_json(status_code, report)
             return
 
         if parsed.path == "/api/stores":
