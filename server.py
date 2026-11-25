@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import datetime
 import functools
+import hashlib
 import http.server
 import json
 import mimetypes
@@ -119,6 +120,26 @@ def get_supabase_credentials() -> Tuple[str, str]:
     return url, key
 
 
+def get_cloudinary_credentials() -> Tuple[str, str, str]:
+    """Extract (cloud_name, api_key, api_secret) from environment."""
+    cloud_url = os.environ.get("CLOUDINARY_URL", "").strip()
+    if cloud_url.startswith("cloudinary://"):
+        try:
+            parsed = urllib.parse.urlparse(cloud_url)
+            api_key = parsed.username or ""
+            api_secret = parsed.password or ""
+            cloud_name = parsed.hostname or ""
+            if api_key and api_secret and cloud_name:
+                return cloud_name, api_key, api_secret
+        except Exception:
+            pass
+
+    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", "").strip()
+    api_key = os.environ.get("CLOUDINARY_API_KEY", "").strip()
+    api_secret = os.environ.get("CLOUDINARY_API_SECRET", "").strip()
+    return cloud_name, api_key, api_secret
+
+
 def get_integration_status() -> Dict[str, Any]:
     """Return safe integration status booleans without exposing secrets."""
     apps_script_url = os.environ.get("GOOGLE_APPS_SCRIPT_URL", "").strip()
@@ -130,6 +151,7 @@ def get_integration_status() -> Dict[str, Any]:
     sheets_api_ready = bool(spreadsheet_id and (sa_json or sa_file))
 
     supabase_url, supabase_key = get_supabase_credentials()
+    c_name, c_key, c_secret = get_cloudinary_credentials()
 
     return {
         "googleSheetsConfigured": apps_script_ready or sheets_api_ready,
@@ -139,6 +161,7 @@ def get_integration_status() -> Dict[str, Any]:
             else ("service_account" if sheets_api_ready else "unconfigured")
         ),
         "supabaseConfigured": bool(supabase_url and supabase_key),
+        "cloudinaryConfigured": bool(c_name and c_key and c_secret),
     }
 
 
@@ -374,6 +397,60 @@ def upload_file_to_supabase_storage(file_bytes: bytes, filename: str, mime_type:
         print(f"[Supabase Storage warning] {filename}: {err_msg}")
     except Exception as e:
         print(f"[Supabase Storage warning] {filename}: {e}")
+
+    return None
+
+
+def upload_to_cloudinary(file_data_url: str, is_video: bool = True) -> Optional[Dict[str, Any]]:
+    """Upload media to Cloudinary via REST API and return { url, poster, duration, public_id }."""
+    cloud_name, api_key, api_secret = get_cloudinary_credentials()
+    if not (cloud_name and api_key and api_secret):
+        return None
+
+    resource_type = "video" if is_video else "image"
+    timestamp = int(datetime.datetime.now().timestamp())
+    to_sign = f"timestamp={timestamp}{api_secret}"
+    signature = hashlib.sha1(to_sign.encode("utf-8")).hexdigest()
+
+    endpoint = f"https://api.cloudinary.com/v1_1/{cloud_name}/{resource_type}/upload"
+    post_data = urllib.parse.urlencode({
+        "file": file_data_url,
+        "timestamp": str(timestamp),
+        "api_key": api_key,
+        "signature": signature,
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        endpoint,
+        data=post_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            secure_url = data.get("secure_url", "")
+            if secure_url:
+                poster_url = ""
+                if is_video:
+                    poster_url = secure_url.rsplit(".", 1)[0] + ".jpg"
+                return {
+                    "url": secure_url,
+                    "poster": poster_url,
+                    "duration": data.get("duration", 0),
+                    "public_id": data.get("public_id", ""),
+                }
+    except urllib.error.HTTPError as e:
+        err_msg = ""
+        try:
+            err_body = e.read().decode("utf-8")
+            err_msg = f"HTTP {e.code}: {err_body}"
+        except Exception:
+            err_msg = f"HTTP {e.code}"
+        print(f"[Cloudinary upload warning] {err_msg}")
+    except Exception as e:
+        print(f"[Cloudinary upload warning]: {e}")
 
     return None
 
@@ -1192,17 +1269,31 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             is_video = ext in (".mp4", ".webm", ".mov", ".m4v")
             guessed_mime = self.guess_type(safe_filename) or ("video/mp4" if is_video else "image/jpeg")
 
-            # Upload to Supabase Storage 'media' bucket for permanent global CDN hosting
-            supabase_media_url = upload_file_to_supabase_storage(raw_bytes, safe_filename, guessed_mime)
-            if supabase_media_url:
-                file_url = supabase_media_url
+            storage_provider = "local"
+            poster_url = ""
+
+            # Storage priority:
+            # 1. Cloudinary (preferred for videos & auto-generated poster thumbnails)
+            # 2. Supabase Storage ('media' bucket global CDN)
+            # 3. Local disk fallback
+            c_result = upload_to_cloudinary(data_url, is_video=is_video)
+            if c_result and c_result.get("url"):
+                file_url = c_result["url"]
+                poster_url = c_result.get("poster", "")
+                storage_provider = "cloudinary"
+            else:
+                supabase_media_url = upload_file_to_supabase_storage(raw_bytes, safe_filename, guessed_mime)
+                if supabase_media_url:
+                    file_url = supabase_media_url
+                    storage_provider = "supabase"
 
             self.send_json(200, {
                 "ok": True,
                 "url": file_url,
+                "posterUrl": poster_url,
                 "filename": safe_filename,
                 "mediaType": "video" if is_video else "image",
-                "storage": "supabase" if supabase_media_url else "local",
+                "storage": storage_provider,
             })
             return
 
