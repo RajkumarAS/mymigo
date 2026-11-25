@@ -17,3 +17,10 @@ __pycache__/
 # Ignore all environment files except the example
 .env*
 !.env.example
+
+# NutriSnap runtime files
+_archive_mymigo/
+_nutrisnap_backup/
+*.db
+uploads/meals/
+uploads/pixel_*.png

@@ -325,5 +325,40 @@ class StoreProfileTests(unittest.TestCase):
         self.assertIn('store-avatar-image-modal', store_content, "Seller profile must have profile image popup modal")
         self.assertIn('aspect-square', store_content, "Store image popup must have aspect ratio frame")
 
+    def test_user_creation_page_and_privacy_requirements(self):
+        # 1. Verify AuthModal user creation page has mobile privacy, role tabs, handle & interests
+        auth_modal_path = os.path.join(self.base_dir, 'src', 'components', 'AuthModal.js')
+        with open(auth_modal_path, 'r', encoding='utf-8') as f:
+            auth_content = f.read()
+
+        self.assertIn('setup-shopper-handle', auth_content, "AuthModal must provide shopper handle input")
+        self.assertIn('setup-shopper-name', auth_content, "AuthModal must provide shopper name input")
+        self.assertIn('setup-tab-shopper', auth_content, "AuthModal must provide role creation tabs")
+        self.assertIn('setup-tab-seller', auth_content, "AuthModal must provide seller creation tabs")
+        self.assertIn('interests-chips-container', auth_content, "AuthModal must provide shopping interest chips")
+        self.assertIn('sheet-login-mobile-btn', auth_content, "Switcher sheet must provide direct mobile login button")
+        self.assertIn('forceLogin', auth_content, "openAuthModal must support forceLogin")
+
+        # 2. Verify ProfilePage keeps place/mobile private and displays handle & interests
+        profile_path = os.path.join(self.base_dir, 'src', 'pages', 'ProfilePage.js')
+        with open(profile_path, 'r', encoding='utf-8') as f:
+            profile_content = f.read()
+
+        self.assertNotIn('📍 ${escapeHtml(profile.city', profile_content, "Shopper profile header must not publicly display city")
+        self.assertNotIn('📍 ${escapeHtml(prof.city', profile_content, "Shopper avatar popup must not display city")
+        self.assertIn('profile.interests', profile_content, "ProfilePage must display user interests")
+        self.assertIn('shopper-handle', profile_content, "Shopper edit popup must have handle input")
+        self.assertNotIn('id="shopper-phone"', profile_content, "Shopper edit modal must not ask for phone publicly")
+        self.assertNotIn('id="shopper-city"', profile_content, "Shopper edit modal must not ask for city publicly")
+
+        # 3. Verify Supabase schema has users and sellers tables
+        schema_path = os.path.join(self.base_dir, 'supabase', 'schema.sql')
+        with open(schema_path, 'r', encoding='utf-8') as f:
+            schema_content = f.read()
+
+        self.assertIn('CREATE TABLE IF NOT EXISTS public.users', schema_content, "Schema must have users table")
+        self.assertIn('CREATE TABLE IF NOT EXISTS public.sellers', schema_content, "Schema must have sellers table")
+        self.assertIn('CREATE TABLE IF NOT EXISTS public.stores', schema_content, "Schema must have stores table")
+
 if __name__ == '__main__':
     unittest.main()

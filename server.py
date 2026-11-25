@@ -930,10 +930,12 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             user_entry = {
                 "id": user_id,
                 "name": str(payload.get("name", "New Shopper")).strip(),
+                "handle": str(payload.get("handle", "")).strip(),
                 "email": str(payload.get("email", "")).strip(),
                 "phone": str(payload.get("phone", "")).strip(),
-                "city": str(payload.get("city", "Coimbatore")).strip(),
+                "city": str(payload.get("city", "")).strip(),
                 "avatar": str(payload.get("avatar", "")).strip() or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+                "interests": str(payload.get("interests", "")).strip(),
                 "preferences": str(payload.get("preferences", "")).strip(),
                 "connectionsCount": int(payload.get("connectionsCount", 140)),
                 "role": "shopper",

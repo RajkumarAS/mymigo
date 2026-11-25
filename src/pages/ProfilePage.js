@@ -40,7 +40,14 @@ export function renderProfilePage(container, navigate, query) {
           city: activeShopper?.city || currentUser.city || rawProfile.city,
           handle:
             activeShopper?.handle ||
+            currentUser?.handle ||
             `@${(activeShopper?.name || currentUser.name || 'ananya_shopper').toLowerCase().replace(/\s+/g, '_')}`,
+          interests:
+            activeShopper?.interests ||
+            currentUser?.interests ||
+            activeShopper?.preferences ||
+            currentUser?.preferences ||
+            rawProfile.shoppingInterest,
         }
       : rawProfile;
 
@@ -185,9 +192,11 @@ export function renderProfilePage(container, navigate, query) {
                 }
               </div>
 
-              <!-- Location / Interest Subtitle -->
-              <p class="text-xs text-[#78716C] mt-0.5 font-medium truncate">
-                📍 ${escapeHtml(profile.city || 'Coimbatore')} • Verified Migo Shopper
+              <!-- Interest / Handle Subtitle (Place and mobile number strictly kept private) -->
+              <p class="text-xs text-[#78716C] mt-0.5 font-medium truncate flex items-center gap-1.5 flex-wrap">
+                <span class="font-bold text-[#004643]">${escapeHtml(profile.handle || `@${(profile.name || 'shopper').toLowerCase().replace(/\s+/g, '_')}`)}</span>
+                <span>•</span>
+                <span>${escapeHtml(profile.interests || profile.preferences || 'Verified Migo Shopper')}</span>
               </p>
 
               <!-- Connections Pill Button (Click navigates to Migo Connect) -->
@@ -765,6 +774,13 @@ export function renderProfilePage(container, navigate, query) {
       });
     });
 
+    // Profile Settings Gear Button: Also opens Account Switcher / Mobile Login Sheet
+    container.querySelector('#profile-settings-btn')?.addEventListener('click', () => {
+      openAccountSwitcherBottomSheet(navigate, () => {
+        render();
+      });
+    });
+
     // Edit Profile Modal
     container.querySelector('#edit-profile-btn')?.addEventListener('click', () => {
       openEditShopperModal();
@@ -1084,10 +1100,10 @@ export function renderProfilePage(container, navigate, query) {
           />
         </div>
 
-        <!-- Footer / Caption Details -->
+        <!-- Footer / Caption Details (Place and mobile strictly hidden) -->
         <div class="pt-2 border-t border-[#E7E3D9] flex items-center justify-between text-xs text-[#57534E]">
-          <span class="truncate">📍 ${escapeHtml(prof.city || 'Coimbatore')}</span>
-          <span class="font-bold text-[#004643] shrink-0">${prof.connectionsCount || 84} Connections</span>
+          <span class="truncate font-bold text-[#004643]">${escapeHtml(prof.handle || handle)}</span>
+          <span class="font-bold text-[#57534E] shrink-0">${prof.connectionsCount || 84} Connections</span>
         </div>
       </div>
     `;
@@ -1117,12 +1133,12 @@ export function renderProfilePage(container, navigate, query) {
     const modalEl = document.createElement('div');
     modalEl.id = 'shopper-profile-modal';
     modalEl.className =
-      'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-fade-in select-none';
+      'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-fade-in select-none box-border';
 
     let currentAvatar = profile.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80';
 
     modalEl.innerHTML = `
-      <div class="relative w-full max-w-lg bg-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#DCD6C9] animate-fade-up max-h-[92vh] overflow-y-auto no-scrollbar">
+      <div class="relative w-full max-w-lg mx-auto bg-white rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#DCD6C9] animate-fade-up max-h-[92vh] overflow-y-auto no-scrollbar box-border">
         
         <!-- Close Button -->
         <button
@@ -1135,7 +1151,7 @@ export function renderProfilePage(container, navigate, query) {
 
         <div class="mb-4">
           <h2 class="text-lg sm:text-xl font-bold text-[#141413]">Edit Your Profile</h2>
-          <p class="text-xs text-[#78716C]">Update your photo, contact info, city, and shopping interests.</p>
+          <p class="text-xs text-[#78716C]">Update your photo, handle, and shopping interests.</p>
         </div>
 
         <form id="shopper-profile-form" class="space-y-4">
@@ -1152,7 +1168,7 @@ export function renderProfilePage(container, navigate, query) {
                   id="shopper-avatar-url"
                   value="${escapeHtml(currentAvatar)}"
                   placeholder="Paste Image URL"
-                  class="w-full px-3 py-1.5 rounded-xl border border-[#DCD6C9] text-xs font-medium focus:border-[#004643] outline-none"
+                  class="w-full min-w-0 px-3 py-1.5 rounded-xl border border-[#DCD6C9] text-xs font-medium focus:border-[#004643] outline-none"
                 />
                 <div class="flex items-center gap-2">
                   <label class="px-3 py-1 rounded-lg bg-[#F0EDE5] hover:bg-[#E7E3D9] text-[#141413] text-[11px] font-bold cursor-pointer border border-[#DCD6C9]">
@@ -1165,62 +1181,59 @@ export function renderProfilePage(container, navigate, query) {
             </div>
           </div>
 
-          <!-- Name -->
+          <!-- Name & Handle Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-name">Your Full Name *</label>
+              <input
+                type="text"
+                id="shopper-name"
+                required
+                value="${escapeHtml(profile.name || '')}"
+                placeholder="e.g. Raajkumar"
+                class="w-full px-3.5 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-handle">User ID / Handle *</label>
+              <input
+                type="text"
+                id="shopper-handle"
+                required
+                value="${escapeHtml(profile.handle || `@${(profile.name || 'shopper').toLowerCase().replace(/\s+/g, '_')}`)}"
+                placeholder="@username"
+                class="w-full px-3.5 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none lowercase"
+              />
+            </div>
+          </div>
+
+          <!-- Email (Optional, kept private) -->
           <div>
-            <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-name">Your Full Name *</label>
+            <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-email">Email (Optional • Private)</label>
             <input
-              type="text"
-              id="shopper-name"
-              required
-              value="${escapeHtml(profile.name || '')}"
-              placeholder="e.g. Raajkumar"
+              type="email"
+              id="shopper-email"
+              value="${escapeHtml(profile.email || '')}"
+              placeholder="you@example.com"
               class="w-full px-3.5 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none"
             />
           </div>
 
-          <!-- Email & Phone Grid (Exact match with Seller Category/City grid) -->
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-email">Email</label>
-              <input
-                type="email"
-                id="shopper-email"
-                value="${escapeHtml(profile.email || '')}"
-                placeholder="you@example.com"
-                class="w-full px-3 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-phone">Phone Number</label>
-              <input
-                type="tel"
-                id="shopper-phone"
-                value="${escapeHtml(profile.phone || profile.mobile || '')}"
-                placeholder="+91 98765 43210"
-                class="w-full px-3 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none"
-              />
-            </div>
-          </div>
-
-          <!-- City -->
+          <!-- Preferences / Interests -->
           <div>
-            <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-city">City</label>
-            <select id="shopper-city" class="w-full px-3 py-2 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none bg-white">
-              ${['Coimbatore', 'Chennai', 'Bengaluru', 'Hyderabad', 'Madurai', 'Salem', 'Kochi', 'Mumbai', 'Delhi']
-                .map((c) => `<option value="${c}" ${profile.city === c ? 'selected' : ''}>${c}</option>`)
-                .join('')}
-            </select>
-          </div>
-
-          <!-- Preferences -->
-          <div>
-            <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-preferences">Shopping Preferences / Bio</label>
+            <label class="block text-xs font-bold text-[#141413] mb-1" for="shopper-preferences">Shopping Preferences / Interests</label>
             <textarea
               id="shopper-preferences"
               rows="3"
-              placeholder="e.g. Handcrafted linen shirts, pure cotton weaves & heritage temple silver..."
+              placeholder="e.g. Pure cotton sarees, handloom weaves, temple jewellery, linen wear..."
               class="w-full p-3 rounded-xl border border-[#DCD6C9] text-xs font-normal focus:border-[#004643] outline-none resize-none leading-relaxed"
-            >${escapeHtml(profile.shoppingInterest || profile.preferences || '')}</textarea>
+            >${escapeHtml(profile.interests || profile.shoppingInterest || profile.preferences || '')}</textarea>
+          </div>
+
+          <!-- Privacy Notice -->
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-center gap-2">
+            <span class="text-sm">🔒</span>
+            <span class="text-[11px] leading-tight">Mobile number and location are kept strictly private and never shown publicly on your profile.</span>
           </div>
 
           <!-- Action Buttons -->
@@ -1239,6 +1252,10 @@ export function renderProfilePage(container, navigate, query) {
             >
               Save Profile
             </button>
+          </div>
+        </form>
+      </div>
+    `;
           </div>
         </form>
       </div>
@@ -1295,12 +1312,15 @@ export function renderProfilePage(container, navigate, query) {
       const submitBtn = modalEl.querySelector('#shopper-modal-submit');
       if (submitBtn) submitBtn.textContent = 'Saving...';
 
+      let updatedHandle = modalEl.querySelector('#shopper-handle')?.value.trim() || profile.handle || '';
+      if (updatedHandle && !updatedHandle.startsWith('@')) updatedHandle = `@${updatedHandle}`;
+
       const userPayload = {
         id: profile.id || 'usr-shopper',
-        name: modalEl.querySelector('#shopper-name')?.value.trim() || '',
+        name: modalEl.querySelector('#shopper-name')?.value.trim() || profile.name || 'Shopper',
+        handle: updatedHandle,
         email: modalEl.querySelector('#shopper-email')?.value.trim() || '',
-        phone: modalEl.querySelector('#shopper-phone')?.value.trim() || '',
-        city: modalEl.querySelector('#shopper-city')?.value || 'Coimbatore',
+        interests: modalEl.querySelector('#shopper-preferences')?.value.trim() || '',
         preferences: modalEl.querySelector('#shopper-preferences')?.value.trim() || '',
         avatar: currentAvatar,
         connectionsCount: profile.connectionsCount || 250,

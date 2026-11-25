@@ -1,8 +1,13 @@
 -- ============================================================================
 -- MyMigo MVP Database Schema (Supabase / PostgreSQL)
--- Simple store directory table matching the MVP Store Data specification.
+-- 1. Stores: Boutique directory matching MVP Store Data specification.
+-- 2. Users: Shopper accounts with handle, interests, and profile photo.
+-- 3. Sellers: Boutique Seller accounts with handle, store profile, and category.
 -- ============================================================================
 
+-- ============================================================================
+-- 1. STORES TABLE
+-- ============================================================================
 CREATE TABLE IF NOT EXISTS public.stores (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -20,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.stores (
 CREATE INDEX IF NOT EXISTS idx_stores_active_city_category
   ON public.stores (active, city, category);
 
--- Enable Row Level Security so public clients only read Active stores
+-- Enable Row Level Security
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public can read active stores" ON public.stores;
@@ -28,6 +33,86 @@ CREATE POLICY "Public can read active stores"
   ON public.stores
   FOR SELECT
   USING (active = TRUE);
+
+DROP POLICY IF EXISTS "Public can insert or update stores" ON public.stores;
+CREATE POLICY "Public can insert or update stores"
+  ON public.stores
+  FOR ALL
+  USING (TRUE)
+  WITH CHECK (TRUE);
+
+-- ============================================================================
+-- 2. USERS (SHOPPERS) TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  handle TEXT NOT NULL,
+  avatar TEXT,
+  interests TEXT,
+  preferences TEXT,
+  email TEXT,
+  phone TEXT,
+  role TEXT NOT NULL DEFAULT 'shopper',
+  connections_count INTEGER NOT NULL DEFAULT 140,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_handle ON public.users (handle);
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can read users" ON public.users;
+CREATE POLICY "Public can read users"
+  ON public.users
+  FOR SELECT
+  USING (status = 'active');
+
+DROP POLICY IF EXISTS "Public can insert or update users" ON public.users;
+CREATE POLICY "Public can insert or update users"
+  ON public.users
+  FOR ALL
+  USING (TRUE)
+  WITH CHECK (TRUE);
+
+-- ============================================================================
+-- 3. SELLERS (STORE PROFILES) TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.sellers (
+  id TEXT PRIMARY KEY,
+  store_id TEXT NOT NULL,
+  store_name TEXT NOT NULL,
+  handle TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  avatar TEXT,
+  image TEXT,
+  rating NUMERIC NOT NULL DEFAULT 5.0,
+  connections_count INTEGER NOT NULL DEFAULT 1,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sellers_store_id ON public.sellers (store_id);
+CREATE INDEX IF NOT EXISTS idx_sellers_handle ON public.sellers (handle);
+
+ALTER TABLE public.sellers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can read sellers" ON public.sellers;
+CREATE POLICY "Public can read sellers"
+  ON public.sellers
+  FOR SELECT
+  USING (active = TRUE);
+
+DROP POLICY IF EXISTS "Public can insert or update sellers" ON public.sellers;
+CREATE POLICY "Public can insert or update sellers"
+  ON public.sellers
+  FOR ALL
+  USING (TRUE)
+  WITH CHECK (TRUE);
 
 -- Sample seed data (optional)
 INSERT INTO public.stores (id, name, city, category, description, image, instagram_url, active)

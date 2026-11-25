@@ -348,7 +348,7 @@ export function renderNavbar(container, currentRoute, navigate) {
             navigate(`/profile?id=${encodeURIComponent(shopperId)}`);
           }
         }
-      }, navigate);
+      }, navigate, true);
       return;
     }
 

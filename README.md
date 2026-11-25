@@ -1,110 +1,120 @@
-# MyMigo — Simple MVP Website
+# NutriSnap — AI Food Tracker
 
-> **Someone is there. Shop from anywhere.**  
-> Discover trusted stores and get help shopping from anywhere with MyMigo.
-
----
-
-## MVP Scope
-
-This is the clean first version of **MyMigo** focused strictly on four core actions:
-1. **Explore Stores** — Browse active trusted stores filtered by City and Category.
-2. **Book a Shopping Session** — Submit a shopping assistance request stored securely in Google Sheets.
-3. **Watch Instagram Shopping Videos** — View embedded Instagram Reels/videos and jump straight to Instagram.
-4. **Contact & Learn About MyMigo** — Simple overview and direct contact channels.
+A working, mobile-first AI food tracker built for Indian and international diets. Users can photograph a meal using their camera, upload an image from their photo gallery, or log foods manually. NutriSnap integrates with Google Gemini Vision AI to detect dishes, portion sizes, and calculate calories, protein, carbs, and fat with real-time editing and multi-tenant data isolation.
 
 ---
 
-## Project Structure
+## 🌟 Key Features
 
-```text
-├── index.html                  # Clean HTML shell & Tailwind CSS
-├── server.py                   # Python 3 server (static assets + /api/stores + /api/bookings)
-├── .env.example                # Environment variable template (Google Sheets & Supabase)
-├── data/
-│   └── stores.json             # Local MVP store catalog (Active & Inactive stores)
-├── supabase/
-│   └── schema.sql              # Optional Supabase `stores` table schema + RLS
-├── google-apps-script/
-│   └── Code.gs                 # Ready-to-deploy Google Apps Script webhook for Google Sheets
-├── src/
-│   ├── main.js                 # App entry & 4-route hash router
-│   ├── config.js               # Public frontend configuration (cities, categories, contact)
-│   ├── styles.css              # Editorial minimalist styles
-│   ├── data/
-│   │   └── instagramVideos.js  # Curated Instagram Reel URLs & metadata
-│   ├── services/
-│   │   ├── storeService.js     # Loads active stores
-│   │   ├── bookingService.js   # Submits booking requests to /api/bookings
-│   │   └── instagramHelper.js  # Instagram embed parser & mobile deep-linking
-│   ├── components/
-│   │   ├── Navbar.js           # Strictly 4 menus + Book a Session CTA + mobile hamburger
-│   │   ├── Footer.js           # Minimal footer with contact details
-│   │   ├── StoreCard.js        # Store card with Book a Session button
-│   │   └── InstagramCard.js    # Instagram Reel embed + See on Instagram button
-│   └── pages/
-│       ├── HomePage.js         # Hero, How It Works, Featured Stores, Market Instagram, Contact
-│       ├── ExploreStoresPage.js# Active stores directory with City & Category filters
-│       ├── BookSessionPage.js  # Booking form connected to Google Sheets backend
-│       └── InstagramPage.js    # Dedicated Instagram shopping videos page
-└── tests/
-    └── test_server.py          # Automated backend & booking storage tests
+### 1. Sign Up & Authentication
+- **Country Code Selector**: Pre-selected to **India (+91)** with international country support (🇺🇸 +1, 🇬🇧 +44, 🇦🇪 +971, 🇸🇬 +65, 🇨🇦 +1, 🇦🇺 +61, etc.).
+- **Mobile Number & Password Authentication**: Validates mobile numbers and enforces secure password policies.
+- **Cryptographic Security**: Salted PBKDF2-HMAC-SHA256 password hashing (100,000 rounds) and token-based session management (`secrets.token_hex(32)`).
+- **Multi-Tenant Data Isolation**: Every meal, photo, and dashboard query strictly filters by `user_id`. User A cannot access or view User B's meals or private photos.
+
+### 2. Log a Meal (3 Input Methods)
+- **📸 Take Photo**: Activates mobile camera (`capture="environment"`).
+- **🖼️ Upload Photo**: Selects images from phone gallery.
+- **✍️ Enter Manually**: Direct meal entry without taking photos or calling external AI.
+- **Pre-Scan Image Preview**: Lets users inspect, retake, or replace photos before scanning.
+- **Sample Indian Meals Tray**: 1-click test dishes (Masala Dosa, Chicken Biryani, Steamed Idli Platter, Roti & Dal Thali).
+
+### 3. Gemini Vision AI Analysis
+- **Secure Server-Side Integration**: `GEMINI_API_KEY` stored strictly on backend (environment variable or `.env`).
+- **Vision Model**: Connects to `gemini-2.5-flash` with fallback to `gemini-1.5-flash`.
+- **Indian Culinary Intelligence**: Identifies Indian portions and units:
+  - `piece` (dosas, idlis, rotis, parathas, samosas, eggs)
+  - `katori` (dal, sambar, sabzi, curd, raita, gravies)
+  - `cup` (chai, filter coffee, rice, cereals)
+  - `plate` (biryani, pulao, thali)
+  - `tbsp` (chutneys, ghee, butter)
+  - `grams` (meat, paneer, veggies)
+- **Unclear / Estimated Flags**: Transparently marks photo-based nutrition as estimates and flags items needing verification (e.g., hidden oil, gravies).
+- **Resilient Fallback**: If Gemini fails or hits usage limits, keeps the selected photo and offers "Try Again", "Enter Manually", or "NutriSnap Smart Indian Engine".
+
+### 4. Review & Edit Before Saving
+- **Editable Dishes & Ingredients**: Rename dishes, add missing ingredients, or delete incorrect ones.
+- **Portion Adjustments**: Change quantities and units with **real-time recalculation** of calories, protein, carbs, and fat.
+- **Incomplete Nutrition Indicators**: Highlights manually added items that require nutritional details.
+- **Save Confirmed Meal**: Saves only when the user taps "Save Meal".
+
+### 5. Classify and Save Meals
+- **Categories**: Breakfast, Lunch, Dinner, and Custom.
+- **Custom Labels**: e.g., "Evening Snack", "Post-Workout Shake", "Midnight Munchies".
+- **Date & Exact Time**: Defaults to current date and time with picker options.
+- **Private Photo Storage**: Uploaded photos are stored in user-segregated directories and served through authenticated endpoints.
+
+### 6. Dashboard & History
+- **Today's Nutrition Summary**: Calories logged, daily goal, remaining calories progress meter.
+- **Macronutrient Breakdown**: Protein (logged / goal), Carbs, and Fat.
+- **Categorized Meals**: Grouped into Breakfast, Lunch, Dinner, and Custom with thumbnails, timestamps, and macros.
+- **Date Navigation**: Previous/Next day arrows and date picker to browse history.
+- **Persistent Database**: SQLite storage ensures history persists across refreshes and logins across devices.
+- **Profile Goals**: Edit daily calorie and protein targets with live dashboard synchronization.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Start the Server
+NutriSnap uses standard Python 3.9+ libraries with zero external pip dependencies.
+
+```bash
+python3 server.py
 ```
 
----
+The server starts at `http://localhost:8080`.
 
-## Quick Start
+### 2. Configure Gemini API (Optional)
+Create a `.env` file or export `GEMINI_API_KEY`:
 
-1. **(Optional)** Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+export GEMINI_API_KEY="your-gemini-api-key"
+```
 
-2. **Run the server** (requires Python 3.9+):
-   ```bash
-   python3 server.py
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+*Note: If no API key is provided, NutriSnap automatically enables its built-in Indian food heuristic engine so you can test and demonstrate the full flow without interruption.*
 
-3. **Run automated tests**:
-   ```bash
-   python3 -m unittest discover -s tests -v
-   ```
+### 3. Seed Demo Data
+Pre-seed test accounts and meals:
 
----
+```bash
+python3 seed_demo.py
+```
 
-## Connecting Google Sheets Booking Storage
-
-Bookings are sent to `POST /api/bookings` on `server.py` so **no Google Sheets credentials or spreadsheet IDs are ever exposed in frontend JavaScript**.
-
-Every booking generates a unique ID (e.g. `MYMIGO-20261112-001`), sets `Booking Status` to `New`, and records the exact 13 columns:
-`Booking ID`, `Date Submitted`, `Customer Name`, `Mobile Number`, `WhatsApp Number`, `Email`, `City`, `Store`, `Requirement`, `Preferred Date`, `Preferred Time`, `Additional Notes`, `Booking Status`.
-
-### Option A: Google Apps Script (Fastest)
-1. Create a Google Sheet for MyMigo bookings.
-2. Open **Extensions → Apps Script** and paste [`google-apps-script/Code.gs`](google-apps-script/Code.gs).
-3. Click **Deploy → New deployment → Web app** (*Execute as: Me*, *Who has access: Anyone*).
-4. Copy the Web App URL into `.env`:
-   ```env
-   GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec
-   GOOGLE_APPS_SCRIPT_SECRET=optional-shared-secret
-   ```
-   *(If you set `GOOGLE_APPS_SCRIPT_SECRET`, add the matching `APPS_SCRIPT_SECRET` under Apps Script Project Settings → Script Properties.)*
-
-### Option B: Google Sheets API v4 (Service Account)
-1. Create a Google Cloud Service Account with Google Sheets API enabled and share your spreadsheet with the service account email as **Editor**.
-2. Set in `.env`:
-   ```env
-   GOOGLE_SHEETS_SPREADSHEET_ID=your_spreadsheet_id
-   GOOGLE_SHEETS_RANGE=Bookings!A:M
-   GOOGLE_SERVICE_ACCOUNT_FILE=/absolute/path/to/service-account.json
-   ```
-
-If neither option is configured yet, `/api/bookings` returns an honest `503` status and does **not** fake a successful submission.
+Demo credentials:
+- **User A**: `+91 9876543210` / `password123` (Pre-loaded with breakfast, lunch, snack, and daily goals)
+- **User B**: `+91 9123456789` / `password123` (Isolated account)
 
 ---
 
-## Updating Stores & Instagram Videos
+## 🧪 Running Automated Tests
 
-- **Stores:** Edit [`data/stores.json`](data/stores.json) or configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env` after running [`supabase/schema.sql`](supabase/schema.sql). Only stores with `active: true` appear on **Explore Stores** and in the booking dropdown.
-- **Instagram Videos:** Replace the `instagramUrl` entries in [`src/data/instagramVideos.js`](src/data/instagramVideos.js) with your published MyMigo Instagram Reel links. Videos are embedded directly from Instagram and never hosted on MyMigo.
+Run the complete test suite:
+
+```bash
+# 1. Database and isolation unit tests
+python3 test_db.py
+
+# 2. REST API integration tests
+python3 test_server_api.py
+
+# 3. Complete End-to-End User Journey test
+python3 tests/test_nutrisnap_e2e.py
+```
+
+All tests run completely offline and verify:
+- Signup with India (+91) country code & duplicate prevention
+- Password hashing & login authentication
+- Food scanning & fallback intelligence
+- Ingredient modification & dynamic macro recalculation
+- Multi-tenant isolation (User B cannot access User A's meals, photos, or stats)
+- Manual entry without Gemini calls
+- Saved meal editing & deletion with immediate dashboard updates
+
+---
+
+## 📱 Tech Stack
+- **Frontend**: Clean vanilla JavaScript, self-contained CSS, mobile-first responsive viewport, SVG icons.
+- **Backend**: Python 3 `http.server`, `socketserver.ThreadingMixIn`.
+- **Database**: SQLite3 with foreign keys, indexes, and parameterized queries.
+- **AI Service**: Google Gemini Vision API (`gemini-2.5-flash` / `gemini-1.5-flash`).

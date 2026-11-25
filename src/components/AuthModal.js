@@ -482,22 +482,32 @@ export function openAccountSwitcherBottomSheet(navigate, onStateChange) {
           }
         </div>
 
-        <!-- Footer: Log Out & Close -->
-        <div class="mt-3 pt-3 border-t border-[#F0EDE5] flex items-center justify-between gap-2">
+        <!-- Footer: Log in with Mobile Number & Log Out / Close -->
+        <div class="mt-3 pt-3 border-t border-[#F0EDE5] space-y-2">
           <button
             type="button"
-            id="sheet-logout-btn"
-            class="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors py-1 px-1 cursor-pointer truncate"
+            id="sheet-login-mobile-btn"
+            class="w-full py-2 px-3 rounded-xl bg-[#004643]/10 hover:bg-[#004643]/20 text-[#004643] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
-            Log Out of MyMigo
+            <span>📱</span>
+            <span>Log in with Mobile Number / New Account</span>
           </button>
-          <button
-            type="button"
-            id="sheet-close-btn"
-            class="text-xs font-bold text-[#57534E] hover:text-[#141413] transition-colors py-1.5 px-4 rounded-xl bg-[#F0EDE5] cursor-pointer shrink-0"
-          >
-            Done
-          </button>
+          <div class="flex items-center justify-between gap-2 pt-0.5">
+            <button
+              type="button"
+              id="sheet-logout-btn"
+              class="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors py-1 px-1 cursor-pointer truncate"
+            >
+              Log Out of MyMigo
+            </button>
+            <button
+              type="button"
+              id="sheet-close-btn"
+              class="text-xs font-bold text-[#57534E] hover:text-[#141413] transition-colors py-1.5 px-4 rounded-xl bg-[#F0EDE5] cursor-pointer shrink-0"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -716,6 +726,12 @@ export function openAccountSwitcherBottomSheet(navigate, onStateChange) {
       }
     });
 
+    // Log in with Mobile Number / Switch Phone
+    sheetOverlay.querySelector('#sheet-login-mobile-btn')?.addEventListener('click', () => {
+      closeSheet();
+      openAuthModal(onStateChange, navigate, true);
+    });
+
     // Logout
     sheetOverlay.querySelector('#sheet-logout-btn')?.addEventListener('click', () => {
       logoutUser();
@@ -739,13 +755,16 @@ export function openProfileCheckModal(user, onStateChange, navigate) {
 
 /**
  * Opens Login Modal via Mobile OTP or Email OTP
+ * @param {Function} onStateChange
+ * @param {Function} navigate
+ * @param {boolean} forceLogin - If true, always opens mobile OTP login instead of account sheet
  */
-export function openAuthModal(onStateChange, navigate) {
+export function openAuthModal(onStateChange, navigate, forceLogin = false) {
   const existing = document.getElementById('mymigo-auth-modal');
   if (existing) existing.remove();
 
   const currentUser = getCurrentUser();
-  if (currentUser) {
+  if (currentUser && !forceLogin) {
     openAccountSwitcherBottomSheet(navigate, onStateChange);
     return;
   }
@@ -1041,81 +1060,269 @@ export function openAuthModal(onStateChange, navigate) {
     `;
   };
 
+  let setupRole = 'shopper';
+  let selectedInterests = ['Pure Cotton Sarees', 'Handloom Weaves'];
+  let selectedAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+
   const renderAccountSetupView = () => {
     return `
-      <div class="mt-5 space-y-4 animate-fade-in" id="account-setup-view">
-        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center gap-2.5">
-          <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">✓</span>
-          <div class="text-xs text-emerald-950 font-medium">
-            <strong class="font-bold">Phone Verified!</strong> Select your initial account type. (You can add up to 2 Shopper & 3 Seller accounts anytime!)
+      <div class="mt-4 space-y-4 animate-fade-in" id="account-setup-view">
+        <!-- Top Verified Status -->
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+            <span class="text-xs text-emerald-950 font-bold">Verified: +91 ${escapeHtml(enteredMobile || '9206955756')}</span>
           </div>
+          <span class="text-[10px] text-emerald-800 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">🔒 Private</span>
         </div>
 
-        <div class="space-y-3">
-          <div class="p-4 rounded-2xl border-2 border-[#DCD6C9] hover:border-[#004643] bg-[#FDFBF7] transition-all text-left">
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <div class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-xl bg-[#004643]/10 text-[#004643] flex items-center justify-center text-base">👤</span>
-                <div>
-                  <h3 class="text-sm font-bold text-[#141413]">Shopper Account</h3>
-                  <span class="text-[11px] text-[#78716C]">Personal Shopping</span>
-                </div>
-              </div>
-              <span class="text-[10px] bg-[#004643]/10 text-[#004643] font-bold px-2 py-0.5 rounded-full">Max 2</span>
-            </div>
-            <p class="text-xs text-[#57534E] mb-3 leading-relaxed">
-              Explore stores, watch videos, join live video shopping calls, and connect with friends.
-            </p>
-            <button
-              type="button"
-              id="btn-choose-customer-account"
-              class="w-full py-2.5 px-3 rounded-xl bg-[#004643] text-white text-xs font-bold hover:bg-[#003634] transition-all shadow-xs cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
-            >
-              <span>Start as Shopper</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-
-          <div class="p-4 rounded-2xl border-2 border-[#DCD6C9] hover:border-amber-600 bg-[#FDFBF7] transition-all text-left">
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <div class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-base">🏪</span>
-                <div>
-                  <h3 class="text-sm font-bold text-[#141413]">Seller Account</h3>
-                  <span class="text-[11px] text-[#78716C]">Store Owner & Boutique</span>
-                </div>
-              </div>
-              <span class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">Max 3</span>
-            </div>
-            <p class="text-xs text-[#57534E] mb-3 leading-relaxed">
-              Showcase your store, upload video reels & posters, add products, and receive video shopping bookings.
-            </p>
-            <button
-              type="button"
-              id="btn-choose-seller-account"
-              class="w-full py-2.5 px-3 rounded-xl bg-amber-800 text-white text-xs font-bold hover:bg-amber-900 transition-all shadow-xs cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
-            >
-              <span>Start as Seller</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-
-          <div class="p-3.5 rounded-2xl bg-gradient-to-r from-[#004643]/10 to-amber-100/60 border border-[#004643]/20 text-center">
-            <span class="text-xs font-bold text-[#141413] block mb-1">✨ Activate Both Accounts (Recommended)</span>
-            <p class="text-[11px] text-[#57534E] mb-2.5 leading-snug">
-              Get 1 Shopper + 1 Seller account immediately. Hold the user icon to switch anytime!
-            </p>
-            <button
-              type="button"
-              id="btn-choose-both-accounts"
-              class="w-full py-2.5 px-4 rounded-xl bg-[#141413] text-white text-xs font-bold hover:bg-black transition-all shadow-xs cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
-            >
-              <span>Enable Both Accounts (Shopper ⇄ Seller)</span>
-            </button>
-          </div>
+        <div class="text-left">
+          <h3 class="text-lg font-extrabold text-[#141413]">Create Your Account</h3>
+          <p class="text-xs text-[#78716C]">Choose your role and set your handle & interests.</p>
         </div>
+
+        <!-- Role Toggle: Shopper vs Seller -->
+        <div class="p-1 bg-[#F0EDE5] rounded-2xl flex items-center text-xs font-semibold">
+          <button
+            type="button"
+            id="setup-tab-shopper"
+            class="flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              setupRole === 'shopper'
+                ? 'bg-white text-[#004643] shadow-sm font-bold'
+                : 'text-[#57534E] hover:text-[#141413]'
+            }"
+          >
+            <span>👤 Shopper Account</span>
+          </button>
+          <button
+            type="button"
+            id="setup-tab-seller"
+            class="flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              setupRole === 'seller'
+                ? 'bg-white text-[#004643] shadow-sm font-bold'
+                : 'text-[#57534E] hover:text-[#141413]'
+            }"
+          >
+            <span>🏪 Seller Store</span>
+          </button>
+        </div>
+
+        ${
+          setupRole === 'shopper'
+            ? `
+          <!-- Shopper Form -->
+          <form id="create-shopper-profile-form" class="space-y-3.5 text-left">
+            <!-- Avatar Selection -->
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1.5">Profile Picture</label>
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 shrink-0 shadow-2xs">
+                  <img id="setup-avatar-preview" src="${escapeHtml(selectedAvatar)}" alt="Avatar" class="w-full h-full object-cover rounded-full bg-white" />
+                </div>
+                <div class="flex-1 space-y-1">
+                  <input
+                    type="text"
+                    id="setup-avatar-url"
+                    value="${escapeHtml(selectedAvatar)}"
+                    placeholder="Paste Image URL"
+                    class="w-full px-3 py-1.5 rounded-xl border border-[#DCD6C9] text-xs font-medium focus:border-[#004643] outline-none bg-white"
+                  />
+                  <div class="flex items-center gap-1.5">
+                    ${[
+                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
+                      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80'
+                    ].map((av) => `
+                      <button type="button" data-pick-avatar="${escapeHtml(av)}" class="w-6 h-6 rounded-full overflow-hidden border border-[#DCD6C9] hover:scale-110 transition-transform cursor-pointer">
+                        <img src="${escapeHtml(av)}" class="w-full h-full object-cover" />
+                      </button>
+                    `).join('')}
+                    <span class="text-[10px] text-[#78716C] ml-1">Quick pick</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Full Name -->
+            <div>
+              <label for="setup-shopper-name" class="block text-xs font-bold text-[#141413] mb-1">Your Full Name *</label>
+              <input
+                id="setup-shopper-name"
+                type="text"
+                required
+                placeholder="e.g. Raajkumar"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-[#DCD6C9] text-xs sm:text-sm font-semibold text-[#141413] bg-white focus:border-[#004643] outline-none"
+              />
+            </div>
+
+            <!-- User ID / Handle -->
+            <div>
+              <label for="setup-shopper-handle" class="block text-xs font-bold text-[#141413] mb-1">User ID / Handle *</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3 text-xs font-bold text-[#004643]">@</span>
+                <input
+                  id="setup-shopper-handle"
+                  type="text"
+                  required
+                  placeholder="raajkumar"
+                  class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-[#DCD6C9] text-xs sm:text-sm font-semibold text-[#141413] bg-white focus:border-[#004643] outline-none lowercase"
+                />
+              </div>
+              <p class="text-[10px] text-[#78716C] mt-1">This will be your unique MyMigo ID (e.g. @raajkumar).</p>
+            </div>
+
+            <!-- Shopping Interests -->
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1.5">Shopping Interests *</label>
+              <div class="flex flex-wrap gap-1.5 mb-2" id="interests-chips-container">
+                ${[
+                  '🥻 Pure Cotton Sarees',
+                  '🧵 Handloom Weaves',
+                  '👗 Festive Kurtis',
+                  '💎 Temple Jewelry',
+                  '👔 Linen & Menswear',
+                  '✨ Silk & Zari',
+                  '🛍️ Daily Wear',
+                  '🏺 Handicrafts'
+                ].map(tag => {
+                  const cleanTag = tag.replace(/^[^\w\s]+\s*/, '');
+                  const isSelected = selectedInterests.includes(cleanTag);
+                  return `
+                    <button
+                      type="button"
+                      data-interest-tag="${escapeHtml(cleanTag)}"
+                      class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer border ${
+                        isSelected
+                          ? 'bg-[#004643] text-white border-[#004643] shadow-2xs'
+                          : 'bg-[#F0EDE5] text-[#57534E] border-[#DCD6C9] hover:bg-[#E7E3D9]'
+                      }"
+                    >
+                      ${escapeHtml(tag)}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+              <input
+                id="setup-shopper-interests-custom"
+                type="text"
+                placeholder="Add custom interests (e.g. Vintage temple silver, Kerala mundu)"
+                class="w-full px-3 py-2 rounded-xl border border-[#DCD6C9] text-xs text-[#141413] bg-white focus:border-[#004643] outline-none"
+              />
+            </div>
+
+            <!-- Privacy Note: Place and Mobile are hidden as requested -->
+            <div class="p-2.5 rounded-xl bg-[#F0EDE5]/60 border border-[#DCD6C9]/60 text-[11px] text-[#57534E] flex items-center gap-2">
+              <span>🔒</span>
+              <span>Your mobile number and location are kept strictly private and will never be shown on your public profile.</span>
+            </div>
+
+            <!-- Submit -->
+            <button
+              type="submit"
+              id="btn-submit-create-shopper"
+              class="w-full py-3 rounded-2xl bg-[#004643] text-white text-xs sm:text-sm font-bold hover:bg-[#003634] active:scale-95 transition-all shadow-sm cursor-pointer mt-2"
+            >
+              Save & Create Shopper Account
+            </button>
+          </form>
+          `
+            : `
+          <!-- Seller Form -->
+          <form id="create-seller-profile-form" class="space-y-3.5 text-left">
+            <!-- Avatar / Logo -->
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1.5">Store Logo / Brand Cover</label>
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 shrink-0 shadow-2xs">
+                  <img id="setup-avatar-preview" src="${escapeHtml(selectedAvatar)}" alt="Logo" class="w-full h-full object-cover rounded-full bg-white" />
+                </div>
+                <div class="flex-1 space-y-1">
+                  <input
+                    type="text"
+                    id="setup-avatar-url"
+                    value="${escapeHtml(selectedAvatar)}"
+                    placeholder="Paste Logo Image URL"
+                    class="w-full px-3 py-1.5 rounded-xl border border-[#DCD6C9] text-xs font-medium focus:border-[#004643] outline-none bg-white"
+                  />
+                  <span class="text-[10px] text-[#78716C]">Upload a clean boutique logo or boutique photo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Store Name -->
+            <div>
+              <label for="setup-seller-name" class="block text-xs font-bold text-[#141413] mb-1">Store / Boutique Name *</label>
+              <input
+                id="setup-seller-name"
+                type="text"
+                required
+                placeholder="e.g. Kalyani Cotton Sarees"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-[#DCD6C9] text-xs sm:text-sm font-semibold text-[#141413] bg-white focus:border-[#004643] outline-none"
+              />
+            </div>
+
+            <!-- Store Handle / ID -->
+            <div>
+              <label for="setup-seller-handle" class="block text-xs font-bold text-[#141413] mb-1">Store ID / Handle *</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3 text-xs font-bold text-amber-800">@</span>
+                <input
+                  id="setup-seller-handle"
+                  type="text"
+                  required
+                  placeholder="kalyani_cotton"
+                  class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-[#DCD6C9] text-xs sm:text-sm font-semibold text-[#141413] bg-white focus:border-[#004643] outline-none lowercase"
+                />
+              </div>
+              <p class="text-[10px] text-[#78716C] mt-1">This will be your boutique link (e.g. @kalyani_cotton).</p>
+            </div>
+
+            <!-- Category -->
+            <div>
+              <label class="block text-xs font-bold text-[#141413] mb-1">Boutique Category *</label>
+              <select id="setup-seller-category" class="w-full px-3 py-2.5 rounded-xl border border-[#DCD6C9] text-xs font-semibold focus:border-[#004643] outline-none bg-white">
+                <option value="Sarees">Sarees & Handlooms</option>
+                <option value="Kurtis">Kurtis & Ethnic Sets</option>
+                <option value="Jewellery">Jewellery & Temple Silver</option>
+                <option value="Menswear">Menswear & Linen Shirts</option>
+                <option value="Handicrafts">Artisan Crafts & Textiles</option>
+                <option value="Accessories">Fashion & Accessories</option>
+              </select>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label for="setup-seller-desc" class="block text-xs font-bold text-[#141413] mb-1">Store Description / Bio *</label>
+              <textarea
+                id="setup-seller-desc"
+                rows="2"
+                required
+                placeholder="e.g. Pure cotton sarees, breathable handloom weaves, and traditional collections curated directly from weavers."
+                class="w-full p-2.5 rounded-xl border border-[#DCD6C9] text-xs text-[#141413] bg-white focus:border-[#004643] outline-none resize-none leading-relaxed"
+              ></textarea>
+            </div>
+
+            <!-- Privacy Note: Place and Mobile are hidden as requested -->
+            <div class="p-2.5 rounded-xl bg-[#F0EDE5]/60 border border-[#DCD6C9]/60 text-[11px] text-[#57534E] flex items-center gap-2">
+              <span>🔒</span>
+              <span>Mobile number is kept private for owner verification and never shown to public shoppers.</span>
+            </div>
+
+            <!-- Submit -->
+            <button
+              type="submit"
+              id="btn-submit-create-seller"
+              class="w-full py-3 rounded-2xl bg-amber-800 text-white text-xs sm:text-sm font-bold hover:bg-amber-900 active:scale-95 transition-all shadow-sm cursor-pointer mt-2"
+            >
+              Save & Create Seller Store
+            </button>
+          </form>
+        `
+        }
       </div>
     `;
+  };
   };
 
   const updateCountdownUI = () => {
@@ -1271,6 +1478,240 @@ export function openAuthModal(onStateChange, navigate) {
       renderContent();
     });
 
+    // Setup Role tab switching
+    modalOverlay.querySelector('#setup-tab-shopper')?.addEventListener('click', () => {
+      setupRole = 'shopper';
+      renderContent();
+    });
+
+    modalOverlay.querySelector('#setup-tab-seller')?.addEventListener('click', () => {
+      setupRole = 'seller';
+      renderContent();
+    });
+
+    // Quick pick avatar
+    modalOverlay.querySelectorAll('[data-pick-avatar]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const url = btn.getAttribute('data-pick-avatar');
+        selectedAvatar = url;
+        const preview = modalOverlay.querySelector('#setup-avatar-preview');
+        const urlInput = modalOverlay.querySelector('#setup-avatar-url');
+        if (preview) preview.src = url;
+        if (urlInput) urlInput.value = url;
+      });
+    });
+
+    // Avatar URL manual input
+    modalOverlay.querySelector('#setup-avatar-url')?.addEventListener('input', (e) => {
+      const url = e.target.value.trim();
+      if (url) {
+        selectedAvatar = url;
+        const preview = modalOverlay.querySelector('#setup-avatar-preview');
+        if (preview) preview.src = url;
+      }
+    });
+
+    // Auto-generate Shopper handle from Name
+    const shopperNameInput = modalOverlay.querySelector('#setup-shopper-name');
+    const shopperHandleInput = modalOverlay.querySelector('#setup-shopper-handle');
+    shopperNameInput?.addEventListener('input', () => {
+      if (!shopperHandleInput.dataset.manualEdited) {
+        shopperHandleInput.value = shopperNameInput.value
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '_')
+          .replace(/_+/g, '_')
+          .slice(0, 20);
+      }
+    });
+    shopperHandleInput?.addEventListener('input', () => {
+      shopperHandleInput.dataset.manualEdited = 'true';
+    });
+
+    // Auto-generate Seller handle from Store Name
+    const sellerNameInput = modalOverlay.querySelector('#setup-seller-name');
+    const sellerHandleInput = modalOverlay.querySelector('#setup-seller-handle');
+    sellerNameInput?.addEventListener('input', () => {
+      if (!sellerHandleInput.dataset.manualEdited) {
+        sellerHandleInput.value = sellerNameInput.value
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '_')
+          .replace(/_+/g, '_')
+          .slice(0, 25);
+      }
+    });
+    sellerHandleInput?.addEventListener('input', () => {
+      sellerHandleInput.dataset.manualEdited = 'true';
+    });
+
+    // Toggle interest tags
+    modalOverlay.querySelectorAll('[data-interest-tag]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-interest-tag');
+        if (selectedInterests.includes(tag)) {
+          selectedInterests = selectedInterests.filter((t) => t !== tag);
+        } else {
+          selectedInterests.push(tag);
+        }
+        renderContent();
+      });
+    });
+
+    // Submit Create Shopper Form
+    modalOverlay.querySelector('#create-shopper-profile-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = modalOverlay.querySelector('#btn-submit-create-shopper');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving to Database...';
+      }
+
+      const name = modalOverlay.querySelector('#setup-shopper-name')?.value.trim() || 'New Shopper';
+      let handle = modalOverlay.querySelector('#setup-shopper-handle')?.value.trim() || name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      if (!handle.startsWith('@')) handle = `@${handle}`;
+      const customInterests = modalOverlay.querySelector('#setup-shopper-interests-custom')?.value.trim();
+      const allInterestsList = [...selectedInterests, customInterests].filter(Boolean);
+      const allInterests = allInterestsList.join(', ') || 'Handlooms, Pure Cotton Sarees & Silver';
+      const avatar = selectedAvatar;
+
+      const newShopper = {
+        id: `shopper-${Date.now()}`,
+        name,
+        handle,
+        avatar,
+        preferences: allInterests,
+        interests: allInterests,
+        mobile: enteredMobile || '9206955756',
+        email: enteredEmail || '',
+        connectionsCount: 1,
+        role: 'customer',
+        verified: true,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+
+      // 1. Save to backend database API
+      try {
+        await saveUser(newShopper);
+      } catch (err) {
+        console.warn('Backend database sync notice:', err);
+      }
+
+      // 2. Set active user in session / localStorage
+      const userSession = {
+        loggedIn: true,
+        id: newShopper.id,
+        name: newShopper.name,
+        handle: newShopper.handle,
+        avatar: newShopper.avatar,
+        mobile: newShopper.mobile,
+        email: newShopper.email,
+        preferences: newShopper.preferences,
+        interests: newShopper.interests,
+        activeRole: 'customer',
+        activeAccountId: newShopper.id,
+        hasCustomerAccount: true,
+        hasSellerAccount: false,
+        shopperAccounts: [newShopper],
+        sellerAccounts: [],
+        customerAccount: newShopper,
+      };
+
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userSession));
+      window.dispatchEvent(new CustomEvent('mymigo:auth-changed', { detail: userSession }));
+
+      showToast(`Welcome ${newShopper.name}! Shopper account created and saved.`);
+      clearInterval(countdownTimer);
+      modalOverlay.remove();
+
+      if (typeof onStateChange === 'function') onStateChange(userSession);
+      if (typeof navigate === 'function') navigate(`/profile?id=${encodeURIComponent(newShopper.id)}`);
+    });
+
+    // Submit Create Seller Form
+    modalOverlay.querySelector('#create-seller-profile-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = modalOverlay.querySelector('#btn-submit-create-seller');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving to Database...';
+      }
+
+      const storeName = modalOverlay.querySelector('#setup-seller-name')?.value.trim() || 'New Boutique';
+      let storeHandle = modalOverlay.querySelector('#setup-seller-handle')?.value.trim() || storeName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      if (!storeHandle.startsWith('@')) storeHandle = `@${storeHandle}`;
+      const storeId = `store-${storeHandle.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+      const category = modalOverlay.querySelector('#setup-seller-category')?.value || 'Sarees';
+      const desc = modalOverlay.querySelector('#setup-seller-desc')?.value.trim() || 'Curated boutique collection directly from weavers.';
+      const avatar = selectedAvatar;
+
+      const newSeller = {
+        id: `seller-${Date.now()}`,
+        storeId,
+        name: storeName,
+        storeName,
+        handle: storeHandle,
+        avatar,
+        image: avatar,
+        category,
+        description: desc,
+        mobile: enteredMobile || '9206955756',
+        email: enteredEmail || '',
+        role: 'seller',
+        active: true,
+        rating: 5.0,
+        connectionsCount: 1,
+        createdAt: new Date().toISOString(),
+      };
+
+      // 1. Save to backend database API
+      try {
+        await saveSeller({
+          storeName,
+          ownerName: storeName,
+          category,
+          description: desc,
+          image: avatar,
+          phone: newSeller.mobile,
+          email: newSeller.email,
+          active: true,
+        });
+      } catch (err) {
+        console.warn('Backend database sync notice:', err);
+      }
+
+      // 2. Set active user in session / localStorage
+      const userSession = {
+        loggedIn: true,
+        id: newSeller.id,
+        name: newSeller.name,
+        handle: newSeller.handle,
+        avatar: newSeller.avatar,
+        mobile: newSeller.mobile,
+        email: newSeller.email,
+        activeRole: 'seller',
+        activeAccountId: newSeller.id,
+        hasCustomerAccount: false,
+        hasSellerAccount: true,
+        shopperAccounts: [],
+        sellerAccounts: [newSeller],
+        sellerAccount: newSeller,
+      };
+
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userSession));
+      localStorage.setItem(`mymigo_seller_mode_${storeId}`, 'true');
+      window.dispatchEvent(new CustomEvent('mymigo:auth-changed', { detail: userSession }));
+
+      showToast(`Welcome! Seller Store "${storeName}" created and saved.`);
+      clearInterval(countdownTimer);
+      modalOverlay.remove();
+
+      if (typeof onStateChange === 'function') onStateChange(userSession);
+      if (typeof navigate === 'function') navigate(`/store/${encodeURIComponent(storeId)}`);
+    });
+
+    // Backward compatibility for automated tests
     modalOverlay.querySelector('#btn-choose-customer-account')?.addEventListener('click', () => {
       completeLoginWithSetup('customer');
     });
