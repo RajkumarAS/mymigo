@@ -100,6 +100,23 @@ def load_dotenv(env_path: Path) -> None:
             os.environ[key] = value
 
 
+def get_supabase_credentials() -> Tuple[str, str]:
+    """Resolve Supabase URL and Key supporting both old and new Supabase dashboard naming."""
+    project_id = os.environ.get("SUPABASE_PROJECT_ID", "").strip()
+    url = os.environ.get("SUPABASE_URL", "").strip()
+    if not url and project_id:
+        url = f"https://{project_id}.supabase.co"
+    url = url.rstrip("/")
+
+    key = (
+        os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        or os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+        or os.environ.get("SUPABASE_KEY", "").strip()
+        or os.environ.get("SUPABASE_API_KEY", "").strip()
+    )
+    return url, key
+
+
 def get_integration_status() -> Dict[str, Any]:
     """Return safe integration status booleans without exposing secrets."""
     apps_script_url = os.environ.get("GOOGLE_APPS_SCRIPT_URL", "").strip()
@@ -110,8 +127,7 @@ def get_integration_status() -> Dict[str, Any]:
     apps_script_ready = bool(apps_script_url)
     sheets_api_ready = bool(spreadsheet_id and (sa_json or sa_file))
 
-    supabase_url = os.environ.get("SUPABASE_URL", "").strip()
-    supabase_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    supabase_url, supabase_key = get_supabase_credentials()
 
     return {
         "googleSheetsConfigured": apps_script_ready or sheets_api_ready,
@@ -126,8 +142,7 @@ def get_integration_status() -> Dict[str, Any]:
 
 def load_active_stores() -> List[Dict[str, Any]]:
     """Fetch active stores from Supabase (if configured) or fallback to data/stores.json."""
-    supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
-    supabase_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    supabase_url, supabase_key = get_supabase_credentials()
 
     if supabase_url and supabase_key:
         query_url = (

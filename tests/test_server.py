@@ -72,6 +72,9 @@ class MyMigoServerTests(unittest.TestCase):
             "GOOGLE_SERVICE_ACCOUNT_FILE",
             "SUPABASE_URL",
             "SUPABASE_ANON_KEY",
+            "SUPABASE_PROJECT_ID",
+            "SUPABASE_PUBLISHABLE_KEY",
+            "SUPABASE_KEY",
         ):
             os.environ.pop(key, None)
 
