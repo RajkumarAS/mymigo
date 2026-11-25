@@ -1323,7 +1323,6 @@ export function openAuthModal(onStateChange, navigate, forceLogin = false) {
       </div>
     `;
   };
-  };
 
   const updateCountdownUI = () => {
     const container = modalOverlay.querySelector('#auth-countdown-container');

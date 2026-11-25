@@ -1,17 +1,17 @@
 // MyMigo MVP Application Entry & Router
 
-import { renderNavbar } from './components/Navbar.js?v=20261117w';
-import { renderFooter } from './components/Footer.js?v=20261117w';
-import { renderHomePage } from './pages/HomePage.js?v=20261117w';
-import { renderExploreStoresPage } from './pages/ExploreStoresPage.js?v=20261117w';
-import { renderBookSessionPage } from './pages/BookSessionPage.js?v=20261117w';
-import { renderInstagramPage } from './pages/InstagramPage.js?v=20261117w';
-import { renderStoreProfilePage } from './pages/StoreProfilePage.js?v=20261117w';
-import { renderSearchPage } from './pages/SearchPage.js?v=20261117w';
-import { renderMigoConnectPage } from './pages/MigoConnectPage.js?v=20261117w';
-import { renderNotificationsPage } from './pages/NotificationsPage.js?v=20261117w';
-import { renderProfilePage } from './pages/ProfilePage.js?v=20261117w';
-import { renderAdminPage } from './pages/AdminPage.js?v=20261117w';
+import { renderNavbar } from './components/Navbar.js?v=20261125b';
+import { renderFooter } from './components/Footer.js?v=20261125b';
+import { renderHomePage } from './pages/HomePage.js?v=20261125b';
+import { renderExploreStoresPage } from './pages/ExploreStoresPage.js?v=20261125b';
+import { renderBookSessionPage } from './pages/BookSessionPage.js?v=20261125b';
+import { renderInstagramPage } from './pages/InstagramPage.js?v=20261125b';
+import { renderStoreProfilePage } from './pages/StoreProfilePage.js?v=20261125b';
+import { renderSearchPage } from './pages/SearchPage.js?v=20261125b';
+import { renderMigoConnectPage } from './pages/MigoConnectPage.js?v=20261125b';
+import { renderNotificationsPage } from './pages/NotificationsPage.js?v=20261125b';
+import { renderProfilePage } from './pages/ProfilePage.js?v=20261125b';
+import { renderAdminPage } from './pages/AdminPage.js?v=20261125b';
 import { mediaManager } from './utils/mediaManager.js';
 
 function parseHashRoute() {
