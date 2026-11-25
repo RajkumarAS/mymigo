@@ -109,7 +109,9 @@ def get_supabase_credentials() -> Tuple[str, str]:
     url = url.rstrip("/")
 
     key = (
-        os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.environ.get("SUPABASE_SECRET_KEY", "").strip()
+        or os.environ.get("SUPABASE_ANON_KEY", "").strip()
         or os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
         or os.environ.get("SUPABASE_KEY", "").strip()
         or os.environ.get("SUPABASE_API_KEY", "").strip()

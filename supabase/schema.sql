@@ -114,6 +114,15 @@ CREATE POLICY "Public can insert or update sellers"
   USING (TRUE)
   WITH CHECK (TRUE);
 
+-- ============================================================================
+-- 4. PERMISSIONS & GRANTS
+-- Allow the Supabase API (anon and authenticated roles) to read and write
+-- ============================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.stores TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.users TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.sellers TO anon, authenticated, service_role;
+
 -- Sample seed data (optional)
 INSERT INTO public.stores (id, name, city, category, description, image, instagram_url, active)
 VALUES
