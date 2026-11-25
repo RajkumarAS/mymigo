@@ -80,14 +80,46 @@
   {
     "id": "usr-ananya",
     "name": "Ananya Sundaram",
+    "handle": "@ananya_shopper",
     "email": "ananya.sundaram@example.com",
     "phone": "9206955756",
     "city": "Coimbatore",
     "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-    "preferences": "",
+    "preferences": "Pure cotton sarees & handlooms",
+    "interests": "Pure cotton sarees & handlooms",
     "connectionsCount": 248,
     "role": "shopper",
     "status": "active",
     "createdAt": "2026-11-17T21:57:07.384592"
+  },
+  {
+    "id": "shopper-1795616113625",
+    "name": "Rajkumar Maddy",
+    "handle": "@rajkumar_maddy",
+    "email": "",
+    "phone": "",
+    "city": "",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+    "interests": "Pure Cotton Sarees, Handloom Weaves",
+    "preferences": "Pure Cotton Sarees, Handloom Weaves",
+    "connectionsCount": 1,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-25T14:15:13.625Z"
+  },
+  {
+    "id": "shopper-1795616381335",
+    "name": "Meenu Venkat",
+    "handle": "@meenu_venkat",
+    "email": "",
+    "phone": "",
+    "city": "",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    "interests": "Pure Cotton Sarees, Handloom Weaves, Festive Kurtis",
+    "preferences": "Pure Cotton Sarees, Handloom Weaves, Festive Kurtis",
+    "connectionsCount": 1,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-25T14:19:41.335Z"
   }
 ]

@@ -229,8 +229,161 @@ def save_homepage_config(payload: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
+def sync_user_to_supabase(user_entry: Dict[str, Any], delete: bool = False) -> bool:
+    """Sync a user record to Supabase public.users if credentials exist."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if not (supabase_url and supabase_key):
+        return False
+
+    user_id = str(user_entry.get("id", "")).strip()
+    if not user_id:
+        return False
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    if delete:
+        url = f"{supabase_url}/rest/v1/users?id=eq.{urllib.parse.quote(user_id)}"
+        req = urllib.request.Request(url, headers=headers, method="DELETE")
+    else:
+        url = f"{supabase_url}/rest/v1/users"
+        headers["Prefer"] = "resolution=merge-duplicates"
+        row = {
+            "id": user_id,
+            "name": str(user_entry.get("name", "")).strip() or "Shopper",
+            "handle": str(user_entry.get("handle") or f"@{str(user_entry.get('name', 'shopper')).lower().replace(' ', '_')}").strip(),
+            "avatar": str(user_entry.get("avatar", "")).strip() or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            "interests": str(user_entry.get("interests") or user_entry.get("preferences", "")).strip(),
+            "preferences": str(user_entry.get("preferences") or user_entry.get("interests", "")).strip(),
+            "email": str(user_entry.get("email", "")).strip(),
+            "phone": str(user_entry.get("phone", "")).strip(),
+            "role": str(user_entry.get("role", "shopper")).strip(),
+            "connections_count": int(user_entry.get("connectionsCount", 140)),
+            "status": str(user_entry.get("status", "active")).strip(),
+        }
+        body = json.dumps(row).encode("utf-8")
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return resp.status in (200, 201, 204)
+    except Exception as e:
+        print(f"[Supabase sync user warning] {user_id}: {e}")
+        return False
+
+
+def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) -> bool:
+    """Sync a seller record to Supabase public.sellers if credentials exist."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if not (supabase_url and supabase_key):
+        return False
+
+    seller_id = str(seller_entry.get("id", "")).strip()
+    if not seller_id:
+        return False
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    if delete:
+        url = f"{supabase_url}/rest/v1/sellers?id=eq.{urllib.parse.quote(seller_id)}"
+        req = urllib.request.Request(url, headers=headers, method="DELETE")
+    else:
+        url = f"{supabase_url}/rest/v1/sellers"
+        headers["Prefer"] = "resolution=merge-duplicates"
+        row = {
+            "id": seller_id,
+            "store_id": str(seller_entry.get("storeId") or seller_entry.get("store_id") or f"store-{seller_id}").strip(),
+            "store_name": str(seller_entry.get("storeName") or seller_entry.get("name", "")).strip(),
+            "handle": str(seller_entry.get("handle") or f"@{str(seller_entry.get('storeName', 'store')).lower().replace(' ', '_')}").strip(),
+            "category": str(seller_entry.get("category", "Sarees")).strip(),
+            "description": str(seller_entry.get("description", "")).strip(),
+            "avatar": str(seller_entry.get("avatar") or seller_entry.get("image", "")).strip(),
+            "image": str(seller_entry.get("image") or seller_entry.get("avatar", "")).strip(),
+            "rating": float(seller_entry.get("rating", 5.0)),
+            "connections_count": int(seller_entry.get("connectionsCount", 1)),
+            "active": bool(seller_entry.get("active", True)),
+        }
+        body = json.dumps(row).encode("utf-8")
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return resp.status in (200, 201, 204)
+    except Exception as e:
+        print(f"[Supabase sync seller warning] {seller_id}: {e}")
+        return False
+
+
+def sync_local_data_to_supabase() -> None:
+    """Ensure all local users and sellers are synced into Supabase."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if not (supabase_url and supabase_key):
+        return
+
+    try:
+        if USERS_FILE.is_file():
+            users = json.loads(USERS_FILE.read_text(encoding="utf-8"))
+            for u in users:
+                sync_user_to_supabase(u)
+    except Exception as e:
+        print(f"[Supabase init users sync notice]: {e}")
+
+    try:
+        if SELLERS_FILE.is_file():
+            sellers = json.loads(SELLERS_FILE.read_text(encoding="utf-8"))
+            for s in sellers:
+                sync_seller_to_supabase(s)
+    except Exception as e:
+        print(f"[Supabase init sellers sync notice]: {e}")
+
+
 def load_users() -> List[Dict[str, Any]]:
-    """Load user profiles from data/users.json."""
+    """Load user profiles from Supabase if configured, otherwise fallback to data/users.json."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if supabase_url and supabase_key:
+        query_url = f"{supabase_url}/rest/v1/users?select=*"
+        req = urllib.request.Request(
+            query_url,
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Accept": "application/json",
+            },
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                rows = json.loads(resp.read().decode("utf-8"))
+                if isinstance(rows, list) and len(rows) > 0:
+                    users = []
+                    for r in rows:
+                        users.append({
+                            "id": r.get("id"),
+                            "name": r.get("name"),
+                            "handle": r.get("handle"),
+                            "avatar": r.get("avatar"),
+                            "interests": r.get("interests"),
+                            "preferences": r.get("preferences"),
+                            "email": r.get("email"),
+                            "phone": r.get("phone"),
+                            "role": r.get("role", "shopper"),
+                            "connectionsCount": r.get("connections_count", 140),
+                            "status": r.get("status", "active"),
+                            "createdAt": r.get("created_at"),
+                        })
+                    return users
+        except Exception:
+            pass
+
     if not USERS_FILE.is_file():
         return []
     try:
@@ -252,7 +405,44 @@ def save_users(users: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def load_sellers() -> List[Dict[str, Any]]:
-    """Load seller profiles from data/sellers.json."""
+    """Load seller profiles from Supabase if configured, otherwise fallback to data/sellers.json."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if supabase_url and supabase_key:
+        query_url = f"{supabase_url}/rest/v1/sellers?select=*"
+        req = urllib.request.Request(
+            query_url,
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Accept": "application/json",
+            },
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                rows = json.loads(resp.read().decode("utf-8"))
+                if isinstance(rows, list) and len(rows) > 0:
+                    sellers = []
+                    for r in rows:
+                        sellers.append({
+                            "id": r.get("id"),
+                            "storeId": r.get("store_id"),
+                            "name": r.get("store_name"),
+                            "storeName": r.get("store_name"),
+                            "handle": r.get("handle"),
+                            "category": r.get("category"),
+                            "description": r.get("description"),
+                            "avatar": r.get("avatar"),
+                            "image": r.get("image"),
+                            "rating": r.get("rating", 5.0),
+                            "connectionsCount": r.get("connections_count", 1),
+                            "active": r.get("active", True),
+                            "createdAt": r.get("created_at"),
+                        })
+                    return sellers
+        except Exception:
+            pass
+
     if not SELLERS_FILE.is_file():
         return []
     try:
@@ -716,6 +906,11 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(200, {"ok": True, **get_integration_status()})
             return
 
+        if parsed.path == "/api/sync-supabase":
+            sync_local_data_to_supabase()
+            self.send_json(200, {"ok": True, "message": "Supabase sync triggered successfully."})
+            return
+
         if parsed.path == "/api/stores":
             stores = load_active_stores()
             self.send_json(200, {"ok": True, "stores": stores})
@@ -934,6 +1129,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                 user_id = str(payload.get("id", "")).strip()
                 users = [u for u in users if str(u.get("id")) != user_id]
                 save_users(users)
+                sync_user_to_supabase({"id": user_id}, delete=True)
                 self.send_json(200, {"ok": True, "users": users})
                 return
 
@@ -968,6 +1164,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                 users.append(user_entry)
 
             save_users(users)
+            sync_user_to_supabase(user_entry)
             self.send_json(200, {"ok": True, "user": user_entry, "users": users})
             return
 
@@ -995,6 +1192,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                     sync_seller_to_stores(target_seller, remove=True)
                 sellers = [s for s in sellers if str(s.get("id")) != seller_id]
                 save_sellers(sellers)
+                sync_seller_to_supabase({"id": seller_id}, delete=True)
                 self.send_json(200, {"ok": True, "sellers": sellers})
                 return
 
@@ -1040,6 +1238,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             save_sellers(sellers)
             sync_seller_to_stores(seller_entry)
+            sync_seller_to_supabase(seller_entry)
             self.send_json(200, {"ok": True, "seller": seller_entry, "sellers": sellers})
             return
 
@@ -1262,6 +1461,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
             users = load_users()
             users = [u for u in users if str(u.get("id")) != item_id]
             save_users(users)
+            sync_user_to_supabase({"id": item_id}, delete=True)
             self.send_json(200, {"ok": True, "users": users})
             return
 
@@ -1272,6 +1472,7 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                 sync_seller_to_stores(target, remove=True)
             sellers = [s for s in sellers if str(s.get("id")) != item_id]
             save_sellers(sellers)
+            sync_seller_to_supabase({"id": item_id}, delete=True)
             self.send_json(200, {"ok": True, "sellers": sellers})
             return
 
@@ -1300,6 +1501,8 @@ def main() -> None:
         print(f"MyMigo MVP server running on http://localhost:{port}")
         print(f"Google Sheets mode: {status['googleSheetsMode']}")
         print(f"Supabase stores configured: {status['supabaseConfigured']}")
+        if status.get("supabaseConfigured"):
+            threading.Thread(target=sync_local_data_to_supabase, daemon=True).start()
         httpd.serve_forever()
 
 
