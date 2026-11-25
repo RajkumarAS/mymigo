@@ -1256,10 +1256,6 @@ export function renderProfilePage(container, navigate, query) {
         </form>
       </div>
     `;
-          </div>
-        </form>
-      </div>
-    `;
 
     document.body.appendChild(modalEl);
 
