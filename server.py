@@ -343,6 +343,41 @@ def sync_seller_to_supabase(seller_entry: Dict[str, Any], delete: bool = False) 
         return False, str(e)
 
 
+def upload_file_to_supabase_storage(file_bytes: bytes, filename: str, mime_type: str) -> Optional[str]:
+    """Upload a file to Supabase Storage 'media' bucket and return the public URL."""
+    supabase_url, supabase_key = get_supabase_credentials()
+    if not (supabase_url and supabase_key):
+        return None
+
+    safe_name = urllib.parse.quote(filename.lstrip("/"))
+    upload_url = f"{supabase_url}/storage/v1/object/media/{safe_name}"
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": mime_type or "application/octet-stream",
+        "x-upsert": "true",
+    }
+
+    req = urllib.request.Request(upload_url, data=file_bytes, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            if resp.status in (200, 201):
+                return f"{supabase_url}/storage/v1/object/public/media/{safe_name}"
+    except urllib.error.HTTPError as e:
+        err_msg = ""
+        try:
+            err_body = e.read().decode("utf-8")
+            err_msg = f"HTTP {e.code}: {err_body}"
+        except Exception:
+            err_msg = f"HTTP {e.code}"
+        print(f"[Supabase Storage warning] {filename}: {err_msg}")
+    except Exception as e:
+        print(f"[Supabase Storage warning] {filename}: {e}")
+
+    return None
+
+
 def sync_local_data_to_supabase() -> Dict[str, Any]:
     """Ensure all local users and sellers are synced into Supabase and return diagnostic report."""
     supabase_url, supabase_key = get_supabase_credentials()
@@ -1104,8 +1139,8 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json(400, {"ok": False, "error": "Invalid Content-Length header."})
                 return
 
-            if content_length <= 0 or content_length > 30 * 1024 * 1024:
-                self.send_json(400, {"ok": False, "error": "Media file exceeds size limit (30MB)."})
+            if content_length <= 0 or content_length > 50 * 1024 * 1024:
+                self.send_json(400, {"ok": False, "error": "Media file exceeds size limit (50MB)."})
                 return
 
             raw_body = self.rfile.read(content_length)
@@ -1155,11 +1190,19 @@ class MyMigoRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             file_url = f"./uploads/{safe_filename}"
             is_video = ext in (".mp4", ".webm", ".mov", ".m4v")
+            guessed_mime = self.guess_type(safe_filename) or ("video/mp4" if is_video else "image/jpeg")
+
+            # Upload to Supabase Storage 'media' bucket for permanent global CDN hosting
+            supabase_media_url = upload_file_to_supabase_storage(raw_bytes, safe_filename, guessed_mime)
+            if supabase_media_url:
+                file_url = supabase_media_url
+
             self.send_json(200, {
                 "ok": True,
                 "url": file_url,
                 "filename": safe_filename,
-                "mediaType": "video" if is_video else "image"
+                "mediaType": "video" if is_video else "image",
+                "storage": "supabase" if supabase_media_url else "local",
             })
             return
 
