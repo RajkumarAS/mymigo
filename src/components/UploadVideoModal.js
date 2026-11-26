@@ -3,10 +3,34 @@
 import { escapeHtml } from '../utils/dom.js';
 import { uploadVideo } from '../services/videoService.js';
 import { uploadMediaFile } from '../services/profileService.js';
+import { getCurrentUser } from './AuthModal.js';
 
 export function openUploadVideoModal(stores = [], onUploaded = null) {
   const existing = document.getElementById('mymigo-upload-video-modal');
   if (existing) existing.remove();
+
+  const currentUser = getCurrentUser();
+  const selectOptions = [];
+  if (currentUser) {
+    selectOptions.push({
+      id: currentUser.id || 'user-profile',
+      name: currentUser.name || 'Shopper',
+      city: currentUser.city || 'Coimbatore',
+      handle: (currentUser.handle || 'shopper').replace(/^@/, ''),
+      avatar: currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      label: `${currentUser.name} (@${(currentUser.handle || 'shopper').replace(/^@/, '')}) • My Profile`,
+    });
+  }
+  (stores || []).forEach((s) => {
+    selectOptions.push({
+      id: s.id,
+      name: s.name,
+      city: s.city,
+      handle: s.handle || '',
+      avatar: s.image || '',
+      label: `${s.name} (${s.city})`,
+    });
+  });
 
   let selectedVideoUrl = './uploads/diwali_sale_kurtis.mp4';
   let uploadedFileBase64 = null;
@@ -51,8 +75,8 @@ export function openUploadVideoModal(stores = [], onUploaded = null) {
             id="upload-store-select"
             class="w-full px-3.5 py-2.5 rounded-xl bg-[#27272A] border border-[#3F3F46] text-white focus:border-[#004643] outline-none"
           >
-            ${stores.map(
-              (s) => `<option value="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" data-city="${escapeHtml(s.city)}" data-handle="${escapeHtml(s.handle || '')}" data-avatar="${escapeHtml(s.image || '')}">${escapeHtml(s.name)} (${escapeHtml(s.city)})</option>`
+            ${selectOptions.map(
+              (s) => `<option value="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" data-city="${escapeHtml(s.city)}" data-handle="${escapeHtml(s.handle || '')}" data-avatar="${escapeHtml(s.avatar || '')}">${escapeHtml(s.label || s.name)}</option>`
             ).join('')}
           </select>
         </div>

@@ -6,33 +6,19 @@ import { PROFILES_DATA } from '../data/profiles.js';
 
 const AFFILIATED_ITEMS_KEY = 'mymigo_affiliated_items_v1';
 
-const DEFAULT_AFFILIATED_ITEMS = PROFILES_DATA.raajkumar?.affiliatedItems || [
-  {
-    id: 'aff-1',
-    productId: 'kalyani-prod-1',
-    title: 'Kalyani Pure Cotton Handloom Saree',
-    name: 'Kalyani Pure Cotton Handloom Saree',
-    store: 'Kalyani Cotton',
-    storeId: 'store-kalyani-cotton',
-    category: 'Sarees',
-    price: '₹1,499',
-    priceNumber: 1499,
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
-    description: '100% breathable organic cotton with contrasting thread border.',
-  },
-];
+// Default initial affiliated items for shoppers is empty on first login
+const DEFAULT_AFFILIATED_ITEMS = [];
 
 export function getAffiliatedItems() {
   try {
     const raw = localStorage.getItem(AFFILIATED_ITEMS_KEY);
     if (!raw) {
-      localStorage.setItem(AFFILIATED_ITEMS_KEY, JSON.stringify(DEFAULT_AFFILIATED_ITEMS));
-      return [...DEFAULT_AFFILIATED_ITEMS];
+      return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [...DEFAULT_AFFILIATED_ITEMS];
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    return [...DEFAULT_AFFILIATED_ITEMS];
+    return [];
   }
 }
 

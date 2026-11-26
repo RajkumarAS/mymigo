@@ -63,13 +63,38 @@ export function renderInstagramPage(container, navigate, queryParams) {
   };
   window.addEventListener('hashchange', onRouteExit);
 
+  // Helper to ensure ONLY videos are shown in the feed (never photos or static images)
+  const isVideoItem = (v) => {
+    if (!v) return false;
+    if (v.type === 'photo' || v.type === 'image') return false;
+    const url = v.videoUrl || v.video || '';
+    if (
+      url &&
+      (url.includes('.mp4') ||
+        url.includes('.webm') ||
+        url.includes('.mov') ||
+        url.includes('.m4v') ||
+        url.startsWith('blob:') ||
+        url.startsWith('data:video/'))
+    ) {
+      return true;
+    }
+    if (v.instagramUrl && (v.instagramUrl.includes('/reel/') || v.instagramUrl.includes('/p/'))) {
+      return true;
+    }
+    return Boolean(v.videoUrl);
+  };
+
   const render = () => {
     // Cleanup any existing observer & stop active videos before fresh render
     cleanupAllReels();
     reelPlayers = [];
 
+    // Filter videos: strictly videos only (exclude images/photos)
+    const allVideoItems = videos.filter(isVideoItem);
+
     // Filter videos by selected city
-    const filteredVideos = videos.filter((v) => {
+    const filteredVideos = allVideoItems.filter((v) => {
       if (selectedCity === 'All') return true;
       return v.city && v.city.toLowerCase() === selectedCity.toLowerCase();
     });
@@ -123,11 +148,11 @@ export function renderInstagramPage(container, navigate, queryParams) {
                   : 'bg-black/60 text-zinc-300 border border-white/20 hover:bg-black/80 hover:text-white'
               }"
             >
-              All (${videos.length})
+              All (${allVideoItems.length})
             </button>
             ${PUBLIC_CONFIG.cities
               .map((city) => {
-                const count = videos.filter((v) => v.city && v.city.toLowerCase() === city.toLowerCase()).length;
+                const count = allVideoItems.filter((v) => v.city && v.city.toLowerCase() === city.toLowerCase()).length;
                 if (count === 0) return '';
                 return `
                 <button
@@ -153,20 +178,35 @@ export function renderInstagramPage(container, navigate, queryParams) {
           class="w-full h-full sm:max-w-[440px] sm:h-[94vh] sm:my-auto overflow-y-auto snap-y snap-mandatory no-scrollbar sm:rounded-[36px] bg-black sm:bg-[#0A0A0C] sm:border sm:border-[#27272A] sm:shadow-2xl"
           style="scroll-snap-type: y mandatory; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;"
         >
-          ${filteredVideos
-            .map(
-              (v, idx) => `
-            <div
-              class="reel-snap-item relative w-full h-[100dvh] sm:h-[720px] flex items-center justify-center snap-center snap-always"
-              data-reel-index="${idx}"
-              data-reel-id="${escapeHtml(v.id)}"
-              style="scroll-snap-align: center; scroll-snap-stop: always;"
-            >
-              <!-- Reel Player dynamically mounted here -->
+          ${filteredVideos.length === 0
+            ? `
+            <div class="w-full h-[100dvh] sm:h-[720px] flex flex-col items-center justify-center p-6 text-center text-white select-none">
+              <span class="text-4xl mb-3">🎬</span>
+              <h3 class="text-base font-bold text-white mb-1">No video reels found</h3>
+              <p class="text-xs text-zinc-400 max-w-xs mb-4">No video reels available for ${escapeHtml(selectedCity)}. Discover partner boutiques or post a new reel.</p>
+              <button
+                type="button"
+                id="reels-back-to-stores-btn"
+                class="px-4 py-2 rounded-xl bg-[#004643] text-white text-xs font-bold active:scale-95 transition-all shadow-md cursor-pointer"
+              >
+                Explore Stores
+              </button>
             </div>
-          `
-            )
-            .join('')}
+            `
+            : filteredVideos
+                .map(
+                  (v, idx) => `
+                <div
+                  class="reel-snap-item relative w-full h-[100dvh] sm:h-[720px] flex items-center justify-center snap-center snap-always"
+                  data-reel-index="${idx}"
+                  data-reel-id="${escapeHtml(v.id)}"
+                  style="scroll-snap-align: center; scroll-snap-stop: always;"
+                >
+                  <!-- Reel Player dynamically mounted here -->
+                </div>
+              `
+                )
+                .join('')}
         </div>
 
       </div>
@@ -176,6 +216,8 @@ export function renderInstagramPage(container, navigate, queryParams) {
   };
 
   const mountFeedAndAttachHandlers = (filteredVideos) => {
+    container.querySelector('#reels-back-to-stores-btn')?.addEventListener('click', handleExitToStores);
+
     const feedContainer = container.querySelector('#reels-snap-feed');
     if (!feedContainer) return;
 
@@ -191,7 +233,11 @@ export function renderInstagramPage(container, navigate, queryParams) {
         onStoreClick: (v) => {
           cleanupAllReels();
           showMobileBottomDock();
-          navigate(`/store/${encodeURIComponent(v.storeId)}`);
+          if (v.storeId && (v.storeId.startsWith('user-') || v.storeId.startsWith('shopper-'))) {
+            navigate('/profile');
+          } else {
+            navigate(`/store/${encodeURIComponent(v.storeId)}`);
+          }
         },
         onBackClick: handleExitToStores,
         autoPlay: isFirst, // First video autoplays immediately!

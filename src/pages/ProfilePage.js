@@ -15,6 +15,25 @@ export function renderProfilePage(container, navigate, query) {
   const rawProfile = getProfileData(profileId);
   let currentUser = getCurrentUser();
 
+  function getUserPosts(userId) {
+    if (!userId) return [];
+    try {
+      const raw = localStorage.getItem(`mymigo_user_posts_${userId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function saveUserPosts(userId, posts) {
+    if (!userId) return;
+    try {
+      localStorage.setItem(`mymigo_user_posts_${userId}`, JSON.stringify(posts));
+    } catch (e) {}
+  }
+
   function getComputedProfile() {
     currentUser = getCurrentUser();
     const activeShopper =
@@ -26,9 +45,11 @@ export function renderProfilePage(container, navigate, query) {
         (!query.get('id') ||
           query.get('id') === currentUser.id ||
           query.get('id') === currentUser.activeAccountId ||
-          currentUser.shopperAccounts?.some((a) => a.id === query.get('id')) ||
-          profileId === 'raajkumar')
+          currentUser.shopperAccounts?.some((a) => a.id === query.get('id')))
     );
+
+    const currentUserId = currentUser?.id || currentUser?.handle;
+    const userPosts = isSelf && currentUserId ? getUserPosts(currentUserId) : (rawProfile.mediaPosts || []);
 
     return isSelf && currentUser
       ? {
@@ -50,6 +71,7 @@ export function renderProfilePage(container, navigate, query) {
             activeShopper?.preferences ||
             currentUser?.preferences ||
             rawProfile.shoppingInterest,
+          mediaPosts: userPosts,
         }
       : rawProfile;
   }
@@ -652,7 +674,11 @@ export function renderProfilePage(container, navigate, query) {
       `;
     }
 
-    // Default: Media Tabs (Video / Photo) + 2-Column Grid matching screenshot
+    // Default: Media Tabs (Video / Photo) + Filtered Content with Empty States
+    const allPosts = Array.isArray(profile.mediaPosts) ? profile.mediaPosts : [];
+    const videoPosts = allPosts.filter((p) => p.type === 'video');
+    const photoPosts = allPosts.filter((p) => p.type === 'photo');
+
     return `
       <!-- Media Tabs -->
       <div class="border-b border-[#DCD6C9] mb-4">
@@ -662,7 +688,8 @@ export function renderProfilePage(container, navigate, query) {
           <button
             id="media-subtab-video"
             type="button"
-            class="py-3 flex items-center justify-center transition-colors relative ${
+            aria-label="Video Reels"
+            class="py-3 flex items-center justify-center transition-colors relative cursor-pointer ${
               mediaSubTab === 'video'
                 ? 'text-[#004643]'
                 : 'text-[#78716C] hover:text-[#141413]'
@@ -683,7 +710,8 @@ export function renderProfilePage(container, navigate, query) {
           <button
             id="media-subtab-photo"
             type="button"
-            class="py-3 flex items-center justify-center transition-colors relative ${
+            aria-label="Photos"
+            class="py-3 flex items-center justify-center transition-colors relative cursor-pointer ${
               mediaSubTab === 'photo'
                 ? 'text-[#004643]'
                 : 'text-[#78716C] hover:text-[#141413]'
@@ -704,29 +732,124 @@ export function renderProfilePage(container, navigate, query) {
         </div>
       </div>
 
-      <!-- 2-Column Media Grid (Matching Screenshot) -->
-      <div class="grid grid-cols-2 gap-3 sm:gap-4">
-        ${profile.mediaPosts
+      <!-- Media Content Section with Empty States -->
+      ${renderMediaContent(videoPosts, photoPosts)}
+    `;
+  }
+
+  function renderMediaContent(videoPosts, photoPosts) {
+    if (mediaSubTab === 'video') {
+      if (videoPosts.length === 0) {
+        return `
+          <div class="py-12 px-4 text-center bg-white rounded-3xl border border-[#DCD6C9] shadow-2xs max-w-md mx-auto animate-fade-in">
+            <div class="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-[#004643]/10 text-[#004643] flex items-center justify-center text-2xl shadow-2xs">
+              🎬
+            </div>
+            <h3 class="font-bold text-[#141413] text-sm sm:text-base mb-1">No reels posted yet</h3>
+            <p class="text-xs text-[#78716C] max-w-xs mx-auto mb-5 leading-relaxed">
+              Share your boutique discoveries, styling tips, or shopping hauls with the community.
+            </p>
+            <button
+              type="button"
+              id="profile-empty-post-reel-btn"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#004643] text-white text-xs font-bold hover:bg-[#003634] active:scale-95 transition-all shadow-xs cursor-pointer"
+            >
+              <span>🎬</span>
+              <span>Post Reel</span>
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 animate-fade-in">
+          ${videoPosts
+            .map(
+              (post) => `
+            <div
+              data-video-post-id="${escapeHtml(post.id)}"
+              class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-stone-200 border border-[#DCD6C9] shadow-xs group cursor-pointer"
+            >
+              <img
+                src="${escapeHtml(post.thumb || post.poster || post.videoUrl)}"
+                alt="${escapeHtml(post.caption || 'Reel')}"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+              
+              <!-- Play Button Badge in Top-Right -->
+              <div class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/50 backdrop-blur-xs flex items-center justify-center text-white shadow-xs">
+                <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </div>
+
+              <!-- Gradient overlay with subtle caption -->
+              <div class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+                <p class="text-[11px] text-white font-medium line-clamp-1">
+                  ${escapeHtml(post.caption || 'Reel')}
+                </p>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
+    // Photo SubTab
+    if (photoPosts.length === 0) {
+      return `
+        <div class="py-12 px-4 text-center bg-white rounded-3xl border border-[#DCD6C9] shadow-2xs max-w-md mx-auto animate-fade-in">
+          <div class="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-2xl shadow-2xs">
+            📸
+          </div>
+          <h3 class="font-bold text-[#141413] text-sm sm:text-base mb-1">No photos posted yet</h3>
+          <p class="text-xs text-[#78716C] max-w-xs mx-auto mb-5 leading-relaxed">
+            Upload photos of your favorite outfits, boutique visits, and styles.
+          </p>
+          <button
+            type="button"
+            id="profile-empty-post-image-btn"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#004643] text-white text-xs font-bold hover:bg-[#003634] active:scale-95 transition-all shadow-xs cursor-pointer"
+          >
+            <span>📸</span>
+            <span>Post Image</span>
+          </button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 animate-fade-in">
+        ${photoPosts
           .map(
             (post) => `
-          <div class="relative aspect-4/5 rounded-2xl overflow-hidden bg-stone-200 border border-[#DCD6C9] shadow-xs group cursor-pointer">
+          <div
+            data-photo-post-id="${escapeHtml(post.id)}"
+            class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-stone-200 border border-[#DCD6C9] shadow-xs group cursor-pointer"
+          >
             <img
-              src="${post.thumb}"
-              alt="${escapeHtml(post.caption)}"
+              src="${escapeHtml(post.thumb || post.image || '')}"
+              alt="${escapeHtml(post.caption || 'Photo')}"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
             />
             
-            <!-- Play Button Badge in Top-Right (matching screenshot) -->
-            <div class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white">
-              <svg class="w-3 h-3 fill-current ml-0.5" viewBox="0 0 24 24">
-                <polygon points="5 3 19 12 5 21 5 3"/>
+            <!-- Camera Icon Top-Right (No play button on photos) -->
+            <div class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/40 backdrop-blur-xs flex items-center justify-center text-white/90 shadow-xs pointer-events-none">
+              <svg class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
             </div>
 
-            <!-- Gradient overlay with subtle caption on hover -->
-            <div class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <!-- Gradient overlay with subtle caption -->
+            <div class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
               <p class="text-[11px] text-white font-medium line-clamp-1">
-                ${escapeHtml(post.caption)}
+                ${escapeHtml(post.caption || 'Photo')}
               </p>
             </div>
           </div>
@@ -805,36 +928,89 @@ export function renderProfilePage(container, navigate, query) {
       openCreateSellerModal();
     });
 
+    // Handle newly uploaded Reel
+    const handleOnReelUploaded = (newVideo) => {
+      currentUser = getCurrentUser();
+      const userId = currentUser?.id || currentUser?.handle || 'raajkumar';
+      const reelPost = {
+        id: newVideo?.id || `reel-${Date.now()}`,
+        type: 'video',
+        thumb: newVideo?.poster || newVideo?.avatar || newVideo?.videoUrl || './uploads/diwali_sale_kurtis.mp4',
+        videoUrl: newVideo?.videoUrl || './uploads/diwali_sale_kurtis.mp4',
+        caption: newVideo?.caption || 'New boutique reel',
+        timestamp: Date.now(),
+      };
+      const currentPosts = getUserPosts(userId);
+      currentPosts.unshift(reelPost);
+      saveUserPosts(userId, currentPosts);
+      profile = getComputedProfile();
+      mediaSubTab = 'video';
+      activeTab = 'media';
+      render();
+      showProfileToast('🎬 Reel published to Finds & your profile!', true);
+    };
+
     // Post Video Reel Handlers (Available in Customer & Seller Profile)
     const handleOpenPostReel = async () => {
       try {
         const stores = await fetchActiveStores();
-        openUploadVideoModal(stores || [], () => {
-          showProfileToast('Reel published to Finds!', true);
-          navigate('/finds');
+        openUploadVideoModal(stores || [], (newVideo) => {
+          handleOnReelUploaded(newVideo);
         });
       } catch (err) {
         console.error('Error fetching stores for reel upload:', err);
-        openUploadVideoModal([], () => {
-          showProfileToast('Reel published to Finds!', true);
-          navigate('/finds');
+        openUploadVideoModal([], (newVideo) => {
+          handleOnReelUploaded(newVideo);
         });
       }
     };
 
     container.querySelector('#profile-post-reel-btn')?.addEventListener('click', handleOpenPostReel);
     container.querySelector('#profile-post-reel-btn-top')?.addEventListener('click', handleOpenPostReel);
+    container.querySelector('#profile-empty-post-reel-btn')?.addEventListener('click', handleOpenPostReel);
+
+    // Handle newly posted Image
+    const handleOnImageUploaded = (newPost) => {
+      currentUser = getCurrentUser();
+      const userId = currentUser?.id || currentUser?.handle || 'raajkumar';
+      const currentPosts = getUserPosts(userId);
+      currentPosts.unshift(newPost);
+      saveUserPosts(userId, currentPosts);
+      profile = getComputedProfile();
+      mediaSubTab = 'photo';
+      activeTab = 'media';
+      render();
+      showProfileToast('📸 Photo published to profile!', true);
+    };
 
     // Post Image Handlers
     const handleOpenPostImage = () => {
-      openUploadImageModal(() => {
-        mediaSubTab = 'photo';
-        activeTab = 'media';
-        render();
+      openUploadImageModal((newPost) => {
+        handleOnImageUploaded(newPost);
       });
     };
 
     container.querySelector('#profile-post-image-btn')?.addEventListener('click', handleOpenPostImage);
+    container.querySelector('#profile-empty-post-image-btn')?.addEventListener('click', handleOpenPostImage);
+
+    // Video Post Item Click -> navigate to reel in Finds
+    container.querySelectorAll('[data-video-post-id]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const vidId = el.getAttribute('data-video-post-id');
+        navigate(`/finds?video=${encodeURIComponent(vidId)}`);
+      });
+    });
+
+    // Photo Post Item Click -> open photo modal popup
+    container.querySelectorAll('[data-photo-post-id]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const photoId = el.getAttribute('data-photo-post-id');
+        const found = (profile.mediaPosts || []).find((p) => p.id === photoId);
+        if (found) {
+          openPhotoModal(found);
+        }
+      });
+    });
 
     // Loved Stores Card Toggle
     container.querySelector('#loved-stores-card-btn')?.addEventListener('click', () => {
@@ -1040,17 +1216,59 @@ export function renderProfilePage(container, navigate, query) {
         caption: caption,
         timestamp: Date.now(),
       };
-      if (!Array.isArray(profile.mediaPosts)) profile.mediaPosts = [];
-      profile.mediaPosts.unshift(newPost);
       closeImageModal();
-      showProfileToast('Photo published to profile!', true);
-      mediaSubTab = 'photo';
-      activeTab = 'media';
-      render();
-      if (typeof onSuccess === 'function') onSuccess(newPost);
+      if (typeof onSuccess === 'function') {
+        onSuccess(newPost);
+      } else {
+        if (!Array.isArray(profile.mediaPosts)) profile.mediaPosts = [];
+        profile.mediaPosts.unshift(newPost);
+        showProfileToast('Photo published to profile!', true);
+        mediaSubTab = 'photo';
+        activeTab = 'media';
+        render();
+      }
     });
 
     document.body.appendChild(modal);
+  }
+
+  /**
+   * Photo Viewer Popup
+   * Displays the clicked photo post in a modal frame with caption
+   */
+  function openPhotoModal(post) {
+    const existing = document.getElementById('profile-photo-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'profile-photo-modal';
+    modal.className =
+      'fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-fade-in';
+    modal.innerHTML = `
+      <div class="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-[#DCD6C9] animate-scale-in">
+        <button
+          type="button"
+          id="close-photo-modal-btn"
+          aria-label="Close"
+          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white hover:bg-black/80 flex items-center justify-center text-sm font-bold z-10 cursor-pointer"
+        >
+          ✕
+        </button>
+        <div class="aspect-[4/5] w-full bg-stone-100 overflow-hidden">
+          <img src="${escapeHtml(post.thumb || post.image || '')}" alt="${escapeHtml(post.caption || 'Photo')}" class="w-full h-full object-cover" />
+        </div>
+        <div class="p-4 bg-white">
+          <p class="text-xs text-[#141413] font-semibold">${escapeHtml(post.caption || 'Style Find')}</p>
+          <p class="text-[10px] text-[#78716C] mt-1">${new Date(post.timestamp || Date.now()).toLocaleDateString()}</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const close = () => modal.remove();
+    modal.querySelector('#close-photo-modal-btn')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
   }
 
   /**

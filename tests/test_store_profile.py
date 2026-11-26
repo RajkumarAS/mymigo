@@ -360,5 +360,38 @@ class StoreProfileTests(unittest.TestCase):
         self.assertIn('CREATE TABLE IF NOT EXISTS public.sellers', schema_content, "Schema must have sellers table")
         self.assertIn('CREATE TABLE IF NOT EXISTS public.stores', schema_content, "Schema must have stores table")
 
+    def test_empty_states_and_video_feed_filtering(self):
+        profile_path = os.path.join(self.base_dir, 'src', 'pages', 'ProfilePage.js')
+        with open(profile_path, 'r', encoding='utf-8') as f:
+            profile_content = f.read()
+
+        # 1. ProfilePage media subtabs & empty states
+        self.assertIn('profile-empty-post-reel-btn', profile_content, "Reels empty state must have Post Reel button")
+        self.assertIn('profile-empty-post-image-btn', profile_content, "Photos empty state must have Post Image button")
+        self.assertIn('No reels posted yet', profile_content)
+        self.assertIn('No photos posted yet', profile_content)
+        self.assertIn('getUserPosts', profile_content)
+        self.assertIn('saveUserPosts', profile_content)
+        self.assertIn('profile-empty-loved-stores-btn', profile_content)
+        self.assertIn('profile-empty-affiliated-items-btn', profile_content)
+
+        # 2. InstagramPage strictly filters only video items (excludes static photos)
+        instagram_path = os.path.join(self.base_dir, 'src', 'pages', 'InstagramPage.js')
+        with open(instagram_path, 'r', encoding='utf-8') as f:
+            instagram_content = f.read()
+        self.assertIn('isVideoItem', instagram_content, "InstagramPage must strictly filter video items")
+        self.assertIn("v.type === 'photo'", instagram_content, "InstagramPage must exclude photos")
+
+        # 3. Services default to empty arrays for new users
+        loved_path = os.path.join(self.base_dir, 'src', 'services', 'lovedStoresService.js')
+        with open(loved_path, 'r', encoding='utf-8') as f:
+            loved_content = f.read()
+        self.assertIn('DEFAULT_LOVED_STORES = []', loved_content)
+
+        aff_path = os.path.join(self.base_dir, 'src', 'services', 'affiliatedItemsService.js')
+        with open(aff_path, 'r', encoding='utf-8') as f:
+            aff_content = f.read()
+        self.assertIn('DEFAULT_AFFILIATED_ITEMS = []', aff_content)
+
 if __name__ == '__main__':
     unittest.main()

@@ -123,5 +123,21 @@
     "role": "shopper",
     "status": "active",
     "createdAt": "2026-11-25T14:19:41.335Z"
+  },
+  {
+    "id": "shopper-1795665913947",
+    "name": "Yamini Rajkumar",
+    "handle": "@yamini_rajkumar",
+    "email": "",
+    "phone": "9206955756",
+    "mobile": "9206955756",
+    "city": "",
+    "avatar": "./uploads/Relaxed_sky-blue_shirt_studio_portrait_1795665920153.png",
+    "interests": "Pure Cotton Sarees, Handloom Weaves",
+    "preferences": "Pure Cotton Sarees, Handloom Weaves",
+    "connectionsCount": 1,
+    "role": "shopper",
+    "status": "active",
+    "createdAt": "2026-11-26T09:35:23.813290"
   }
 ]

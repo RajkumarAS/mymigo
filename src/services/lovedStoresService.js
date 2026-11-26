@@ -5,30 +5,19 @@ import { showToast } from '../components/AuthModal.js';
 
 const LOVED_STORES_KEY = 'mymigo_loved_stores_v1';
 
-// Default initial loved stores for shoppers
-const DEFAULT_LOVED_STORES = [
-  {
-    id: 'store-kalyani-cotton',
-    name: 'Kalyani Cotton',
-    city: 'Coimbatore',
-    category: 'Cotton Sarees & Weaves',
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80',
-    instagram_url: 'https://www.instagram.com/kalyani_cotton/',
-    note: 'Authentic handloom weaves direct from skilled Coimbatore weavers.',
-  },
-];
+// Default initial loved stores for shoppers is empty on first login
+const DEFAULT_LOVED_STORES = [];
 
 export function getLovedStores() {
   try {
     const raw = localStorage.getItem(LOVED_STORES_KEY);
     if (!raw) {
-      localStorage.setItem(LOVED_STORES_KEY, JSON.stringify(DEFAULT_LOVED_STORES));
-      return [...DEFAULT_LOVED_STORES];
+      return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [...DEFAULT_LOVED_STORES];
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    return [...DEFAULT_LOVED_STORES];
+    return [];
   }
 }
 
